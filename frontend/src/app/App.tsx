@@ -1,10 +1,12 @@
 import { ArrowUpRight, Database, Menu, Orbit, Radio, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router'
-import { CrewHealth, DataScience, MissionOverview, MissionReplay } from '../pages/MissionData'
+import { DataScience, MissionOverview, MissionReplay } from '../pages/MissionData'
 import { screens } from '../pages/screens'
 import { useHealth } from '../services/health'
 import type { Connection } from '../services/health'
+
+const CrewHealth = lazy(() => import('../pages/CrewHealth'))
 
 const statuses = {
   checking: { label: 'Checking backend', storage: 'Checking SQLite', tone: 'neutral' },
@@ -65,7 +67,7 @@ function Screen({ screen, connection }: { screen: typeof screens[number]; connec
   const { title, description } = screen
   const content = {
     '/': <MissionOverview readiness={<Readiness connection={connection} />} />,
-    '/crew-health': <CrewHealth />,
+    '/crew-health': <Suspense fallback={<p role="status">Loading Crew Health…</p>}><CrewHealth /></Suspense>,
     '/mission-replay': <MissionReplay />,
     '/data-and-science': <DataScience />,
   }[screen.path]

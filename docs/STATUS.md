@@ -59,3 +59,10 @@ Implemented transactional historical ingest and connected all four screens to th
 - Polished metric labels and reading typography across the cabin and crew cards, history selector, and metric dictionary. Frontend lint, type check, and production build passed. Verified the cabin and crew labels and switched the history to SpO₂ in the browser.
 
 Stage 03 awaits approval. It will add chronological replay controls and publication through the existing cutoff boundary.
+
+
+## Stage 02.5
+
+Stage 02 was checkpointed locally at bb5b2e1 before the Crew Health changes. Crew Health now groups primary readings into six compact cards with keyboard-accessible details. Secondary metrics stay accessible and link to history. The chart uses 7, 30, or 45 UTC calendar days of existing API data and follows all continuation tokens. Existing heart-rate metric names select resting, exercise, or recovery observations separately.
+
+Frontend lint, TypeScript, and production build passed. An in-app browser pass verified all four crew, indicator and range changes, reading details, table expansion, missing samples, the other three screens, and layouts at 1440, 834, 390, and 320 CSS pixels. See the [Stage 02.5 verification notes](STAGE_02_VERIFICATION.md#stage-025--crew-health). The backend, database and dataset were only read for verification.

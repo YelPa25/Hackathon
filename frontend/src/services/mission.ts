@@ -37,23 +37,62 @@ export type Dataset = {
 
 type Result<T> = { state: 'loading' } | { state: 'error'; message: string } | { state: 'ready'; data: T }
 
-export function useMissionData<T>(url: string, retry = 0): Result<T> {
+async function fetchMissionData<T>(url: string, signal: AbortSignal): Promise<T> {
+  const response = await fetch(url, {
+    cache: 'no-store',
+    headers: { Accept: 'application/json' },
+    signal: AbortSignal.any([signal, AbortSignal.timeout(5000)]),
+  })
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+    throw new Error(body?.error?.message ?? 'The backend could not load this view.')
+  }
+  return response.json()
+}
+
+async function fetchObservationSeries(query: URL, signal: AbortSignal) {
+  let page = await fetchMissionData<ObservationPage>(query.href, signal)
+  const { revision, cursor_utc: cutoff } = page
+  const items = [...page.items]
+  const seen = new Set<string>()
+  while (page.next_cursor) {
+    if (seen.has(page.next_cursor)) throw new Error('History pagination repeated. Retry to reload the records.')
+    seen.add(page.next_cursor)
+    query.searchParams.set('cursor', page.next_cursor)
+    page = await fetchMissionData<ObservationPage>(query.href, signal)
+    if (page.revision !== revision || page.cursor_utc !== cutoff) {
+      throw new Error('Mission time changed while loading history. Retry to reload the records.')
+    }
+    items.push(...page.items)
+  }
+  return { items, revision, cutoff }
+}
+
+export async function fetchObservationHistory(url: string, signal: AbortSignal): Promise<Observation[]> {
+  const query = new URL(url, window.location.origin)
+  const metrics = query.searchParams.getAll('metric')
+  const histories = await Promise.all(metrics.map((metric) => {
+    const seriesUrl = new URL(query)
+    seriesUrl.searchParams.set('metric', metric)
+    return fetchObservationSeries(seriesUrl, signal)
+  }))
+  if (histories.some(({ revision, cutoff }) => revision !== histories[0].revision || cutoff !== histories[0].cutoff)) {
+    throw new Error('Mission time changed while loading history. Retry to reload the records.')
+  }
+  return histories.flatMap(({ items }) => items).sort((a, b) =>
+    a.timestamp_utc.localeCompare(b.timestamp_utc) || a.observation_id.localeCompare(b.observation_id))
+}
+
+export function useMissionData<T>(
+  url: string, retry = 0, loader: (url: string, signal: AbortSignal) => Promise<T> = fetchMissionData<T>,
+): Result<T> {
   const [response, setResponse] = useState<{ url: string; retry: number; result: Result<T> }>()
   useEffect(() => {
     const controller = new AbortController()
     async function load() {
       let result: Result<T>
       try {
-        const response = await fetch(url, {
-          cache: 'no-store',
-          headers: { Accept: 'application/json' },
-          signal: AbortSignal.any([controller.signal, AbortSignal.timeout(5000)]),
-        })
-        if (!response.ok) {
-          const body = await response.json().catch(() => null)
-          throw new Error(body?.error?.message ?? 'The backend could not load this view.')
-        }
-        const data: T = await response.json()
+        const data = await loader(url, controller.signal)
         result = { state: 'ready', data }
       } catch (error) {
         result = { state: 'error', message: error instanceof Error && error.name === 'Error'
@@ -63,6 +102,6 @@ export function useMissionData<T>(url: string, retry = 0): Result<T> {
     }
     void load()
     return () => controller.abort()
-  }, [url, retry])
+  }, [url, retry, loader])
   return response?.url === url && response.retry === retry ? response.result : { state: 'loading' }
 }

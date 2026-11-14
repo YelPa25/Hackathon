@@ -19,3 +19,19 @@ The live SQLite file is `backend/var/astra.sqlite3`. Tables are `crew`, `dataset
 | Browser outage and restart | PASS. Stopped FastAPI, saw Backend unavailable and an inline error with Retry, restarted FastAPI and recovered via Retry. SQLite readiness, the original import timestamp, row count and replay cursor were verified after restart. |
 
 Use the [Windows startup guide](../README.md) to reproduce the checks. Replay playback and personalized analysis are scheduled for later stages. Stage 02 uses a measurement table for the selected metric. The browser pass used the local development console. A full network-adapter disconnection was not run.
+
+
+## Stage 02.5 — Crew Health
+
+Charts use the current published UTC cutoff and the full bounded history. Heart rates use three distinct metric selections. Blood pressure uses separate systolic and diastolic traces in mmHg. Sleep and exercise durations use bars. Self-reported scores use discrete points on the source 0–4 scale. Missing samples interrupt lines, have no numeric point or bar, and carry a dashed amber marker and a record in the detailed table. The choices and cutoffs come from the existing API. Card details retain the timestamp, source, provenance, quality and context.
+
+| Check | Result |
+| --- | --- |
+| Frontend | PASS. Ran npm.cmd run lint, npm.cmd run typecheck, and npm.cmd run build in frontend. The chart bundle loads with Crew Health. |
+| History pagination | PASS. Ran a focused Node check with mocked HTTP pages via node --input-type=module. The loader followed a continuation, preserved bounds, combined both BP series and rejected a changed revision. |
+| Browser interactions | PASS. Verified charts for Daniel, Samir, Hana and Maya. Verified all three date ranges, pressure lines, sleep bars and discrete mood points. Verified pointer and arrow-key tooltips and keyboard expansion of reading details and records. Mission Overview, Mission Replay and Data & Science loaded through the existing navigation. No warnings or errors in the final browser log check. |
+| Values and cutoff | PASS. Browser tooltips showed Daniel at 65 bpm on 2 Jan 2040, 07:40:00 UTC, and 120/73 mmHg on 4 Jan 2040, 08:10:00 UTC. Both matched historical CSV and read-only SQLite values. Daniel's 45-day resting history had 43 points, two gaps, three visible line segments, and 45 table records. Browser timestamps did not exceed Day 45 and a direct Day 46 request through Vite returned an empty list. Confirmed all 17 dataset file hashes. |
+| Responsive | PASS. Checked 1440, 834, 390, and 320 CSS pixels. No page overflow or overlapping date labels in the resting heart rate chart. |
+| Backend regression | Backend code and API contracts stayed unchanged. The 15 existing backend tests passed during the pre-checkpoint Stage 02 verification. |
+
+To repeat, open Crew Health, select **Daniel Okafor**, **Resting Heart Rate**, and **45 days**. Look for gaps on 8 January and 6 February, then expand **Detailed records**. Focus the chart and use the arrow keys to inspect stored samples. Switch to **Blood Pressure**, **Sleep Duration**, or **Mood** to see the different trace types. Use **Reading details** on a card for provenance and collection context.
