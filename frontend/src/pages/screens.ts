@@ -1,4 +1,4 @@
-import { Activity, History, BookOpen, Orbit } from 'lucide-react'
+import { Activity, History, BookOpen, Orbit, FlaskConical } from 'lucide-react'
 
 export const screens = [
   {
@@ -24,5 +24,11 @@ export const screens = [
     title: 'Data & Science',
     icon: BookOpen,
     description: 'Dataset provenance, measurement definitions and research sources.',
+  },
+  {
+    path: '/research-prototypes',
+    title: 'Research Prototypes',
+    icon: FlaskConical,
+    description: 'Facial and acoustic feature monitoring demonstrations.',
   },
 ] as const

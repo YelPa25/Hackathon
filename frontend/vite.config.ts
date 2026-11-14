@@ -43,6 +43,7 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       fs: { strict: true, allow: [frontend] },
       proxy: {
+        '^/research-api(?:/|$)': { target: 'http://127.0.0.1:8051' },
         '^/api(?:/|$)': { target: env.ASTRA_DEV_API_TARGET || 'http://127.0.0.1:8050' },
       },
     },

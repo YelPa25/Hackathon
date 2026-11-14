@@ -76,3 +76,13 @@ Implemented backend-owned chronological replay using the 6,239 original future C
 - Verified all 17 source file hashes. A Day 46 query returned no observations at the live Day 45 cursor, and direct and proxied access to private CSV paths returned 404.
 - Fixed Detailed records collapsing on a playback tick. An isolated browser run confirmed the table stays open as rows refresh, stays closed when dismissed, and can be reopened by keyboard. Frontend lint, type check, and production build passed.
 - See the [Stage 03 verification report](STAGE_03_VERIFICATION.md). Stage 03 is ready for review. Stage 04 awaits approval.
+
+## Research Prototypes · Windows live capture
+
+Research Prototypes supports opt-in webcam preview and microphone sampling. The optional loopback service starts from the repository root with `.\face_speech\live\Start-Research.ps1`. CPU models execute in a Windows AppContainer and use verified local assets. The experimental page uses the participant's wall-clock timestamps. See [live research capture](LIVE_RESEARCH_CAPTURE.md) for setup, workflow and verification.
+
+The 49 prototype tests, 21 Core tests, frontend lint, TypeScript and production build passed. Chrome exercised both real models with generated test streams, valid calibration windows, device release and responsive layout. Physical device capture and full live calibration remain a participant check. The 16 listed source checksums matched.
+
+Capture follow-up: the browser and broker now recover from a dropped request or lost response without clearing calibration. The chart and selector have separate bounds, and the voice readout explains when only the latest sample is unusable. Backend tests (21), frontend lint, TypeScript, build, and focused browser capture and layout checks passed. See [capture reliability and chart spacing](LIVE_RESEARCH_CAPTURE.md#capture-reliability-and-chart-spacing).
+
+The dashboard links now reopen the published charts. Paused live sessions resume their calibration in the same browser tab, and either modality's completed calibration can be saved and reused in that browser. Pipelined speech collection produced new windows 15 seconds apart in Chrome. The shorter camera and speech windows changed the extracted measurements or input quality in fixture trials, so the standard durations remain in use. Browser workflow, both calibration round trips, the 21 Core tests, 49 teammate tests, lint, the production build and all 16 source checksums passed. See [session restore and calibration timing](LIVE_RESEARCH_CAPTURE.md#session-restore-and-calibration-timing).

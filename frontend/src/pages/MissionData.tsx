@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { ResearchSummary } from '../research/ResearchSummary'
 import { Link } from 'react-router'
 import type { Dataset, Mission, Observation } from '../services/mission'
 import { capitalize, formatUtc, label, metricLabel, Panel, Resource, unit } from './mission-display'
@@ -34,6 +35,7 @@ export function MissionOverview({ readiness }: { readiness: ReactNode }) {
       </Panel>
       {readiness}
     </div>
+    <ResearchSummary />
     <Panel title="Crew">
       <ul className="reading-grid">{mission.crew_summaries.map((crew) => <li key={crew.crew_id}>
         <Link className="reading-tile crew-link" to={'/crew-health?' + new URLSearchParams({ crew: crew.crew_id })}>

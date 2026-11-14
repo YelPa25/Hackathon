@@ -7,6 +7,7 @@ import { useHealth } from '../services/health'
 import type { Connection } from '../services/health'
 
 const CrewHealth = lazy(() => import('../pages/CrewHealth'))
+const ResearchPrototypes = lazy(() => import('../pages/ResearchPrototypes'))
 
 const statuses = {
   checking: { label: 'Checking backend', storage: 'Checking SQLite', tone: 'neutral' },
@@ -70,6 +71,9 @@ function Screen({ screen, connection }: { screen: typeof screens[number]; connec
     '/crew-health': <Suspense fallback={<p role="status">Loading Crew Health…</p>}><CrewHealth /></Suspense>,
     '/mission-replay': <MissionReplay />,
     '/data-and-science': <DataScience />,
+    '/research-prototypes': <Suspense fallback={<p role="status">Loading research prototypes</p>}>
+      <ResearchPrototypes />
+    </Suspense>,
   }[screen.path]
   return <section className="screen workspace-inner" aria-labelledby="screen-title" data-enter>
     <header className="screen-heading">

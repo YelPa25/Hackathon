@@ -1,6 +1,7 @@
 import { Activity, BedDouble, Droplets, HeartPulse, Thermometer, Zap } from 'lucide-react'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { ResearchSummary } from '../research/ResearchSummary'
 import { fetchObservationHistory } from '../services/mission'
 import type { Crew, CrewProfile, Latest, Observation } from '../services/mission'
 import { HealthChart, HistoryRecords } from './HealthChart'
@@ -187,6 +188,7 @@ export default function CrewHealth() {
           </div>}</Resource>
         </div>
       </Panel>
+      <ResearchSummary />
       <Resource<Latest> url={'/api/observations/latest?crew_id=' + id} live>{(latest) => <>
         <PrimaryReadings latest={latest} />
         <MeasurementHistory crew={selected.crew_id} latest={latest} metric={metric} days={days}

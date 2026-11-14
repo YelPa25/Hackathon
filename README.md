@@ -54,3 +54,7 @@ This repository includes the six runtime dataset inputs and their original SHA25
 ## Checks
 
 From `backend`, run `uv run --locked --offline --python $astraPython --no-managed-python pytest -q` with the original bundle in one of the default locations. From `frontend`, run `npm.cmd run lint`, `npm.cmd run typecheck` and `npm.cmd run build`. Stop Vite before reinstalling dependencies on Windows so it releases native package files.
+
+### Optional live research capture
+
+Open [Research Prototypes](http://127.0.0.1:5180/research-prototypes) to try the synthetic samples. For local webcam and microphone inference, follow [Windows research setup and startup](docs/LIVE_RESEARCH_CAPTURE.md).
