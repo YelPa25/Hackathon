@@ -1,0 +1,19 @@
+NASA Space Apps: Astronaut Health Self-Monitoring (Facial Analysis Module)
+=================================================================================
+
+WHAT HAS BEEN DONE:
+
+1. Step 0 API Inspection & Environment Setup
+   - Set up Python 3.10 virtual environment compatible with LibreFace 0.2.0, MediaPipe 0.10.5, and timm.
+   - Verified LibreFace outputs: continuous Action Unit (AU) intensities [0, 5], AU binary flags, 3D head pose angles (pitch, yaw, roll), and gaze estimation.
+   - Optimized inference to avoid disk I/O: cropped and aligned faces in memory and loaded neural network weights once at startup rather than per frame.
+
+2. Module Implementation (facial/)
+   - facial/extractor.py: Thin wrapper isolating MediaPipe Face Mesh and LibreFace PyTorch solvers. Turns a raw BGR camera frame into AU intensities, detection flags, lighting metrics, and head pose.
+   - facial/windows.py: Pure aggregation logic. Groups frames into time windows (default 30s at 5 fps), calculates mean & std per AU, expressiveness (global AU mean), head pose std, and AU activation rate. Computes quality score ([detected fraction] * brightness_penalty) and valid flag (quality >= 0.5). Emits the fixed JSON contract. Exposes stream_windows() generator.
+   - facial/run.py: CLI and real-time capture loop. Supports webcam (--source 0) or video file (--source file.mp4), writes to JSONL (--out features.jsonl), provides optional live preview (--show), and handles graceful exit on Ctrl+C / 'q' (--flush-on-exit).
+
+3. Testing & Verification
+   - tests/test_windows.py: Unit tests verifying brightness penalties, high-quality windows, invalid/dark windows, and buffer flushing. All pass.
+   - Benchmarking: Measured ~25 ms extraction latency per frame on laptop CPU (~40 fps sustained max), exceeding the 5 fps real-time requirement.
+   - Deliverables: Verified contract compliance against sample.mp4 and documented all limitations (including proposed MediaPipe EAR/PERCLOS addition for eye blinks) in facial/README.md.
