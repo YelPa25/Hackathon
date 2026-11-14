@@ -1,0 +1,11 @@
+{
+  "pulse_bpm": 71.0686,
+  "systolic_mmhg": 125.9424,
+  "diastolic_mmhg": 74.2447,
+  "respiratory_rate_rpm": 16.9246,
+  "body_temp_c": 36.4215,
+  "cabin_temp_c": 21.5167,
+  "cabin_humidity_pct": 42.8172,
+  "cabin_co2_ppm": 3407.0137,
+  "prior_day_dose_mgy": 0.3808
+}

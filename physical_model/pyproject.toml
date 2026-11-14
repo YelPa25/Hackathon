@@ -1,0 +1,18 @@
+[project]
+name = "hackaton"
+version = "0.1.0"
+description = "Local astronaut health monitoring prototype"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=2.4.6",
+    "optuna>=5.0.0",
+    "pandas>=3.1.1",
+    "scikit-learn>=1.9.1",
+    "xgboost>=3.2.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]
