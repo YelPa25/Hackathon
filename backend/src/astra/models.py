@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Literal
 
-from pydantic import BaseModel, FiniteFloat
+from pydantic import BaseModel, ConfigDict, Field, FiniteFloat, model_validator
 
 Scope = Literal["person", "cabin"]
 Context = Literal["rest", "exercise", "recovery", "sleep", "self_report", "unspecified"]
@@ -68,6 +68,36 @@ class ReplayState(BaseModel):
     cursor_utc: str
     mission_day: int
     visible_count: int
+    speed: Literal[0.5, 2, 5]
+
+
+class ReplayActivity(BaseModel):
+    mission_day: int
+    observation_count: int
+    crew_count: int
+    cabin_count: int
+    first_utc: str | None
+    last_utc: str | None
+
+
+class ReplayView(ReplayState):
+    historical_days: int
+    mission_days: int
+    latest_activity: ReplayActivity | None
+    playback_error: str | None
+
+
+class ReplayCommand(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    command: Literal["PLAY", "PAUSE", "NEXT_DAY", "NEXT_EVENT", "RESET", "SET_SPEED"]
+    expected_revision: int = Field(ge=0, strict=True)
+    speed: Literal[0.5, 2, 5] | None = None
+
+    @model_validator(mode="after")
+    def check_speed(self) -> "ReplayCommand":
+        if (self.command == "SET_SPEED") != (self.speed is not None):
+            raise ValueError("SET_SPEED requires speed and other commands do not accept it.")
+        return self
 
 
 class Mission(BaseModel):
@@ -77,7 +107,9 @@ class Mission(BaseModel):
     replay_status: Literal["PAUSED", "RUNNING", "COMPLETE"]
     synthetic: Literal[True] = True
     crew_summaries: list[Crew]
+    crew_readings: dict[str, Observation]
     cabin_readings: list[Observation]
+    cabin_latest_missing: list[Observation]
     insights: list[str]
 
 

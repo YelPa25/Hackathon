@@ -1,0 +1,18 @@
+.replay-head, .replay-progress-meta, .replay-controls, .replay-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .65rem 1rem;
+}
+.replay-head small { color: var(--color-muted); font-size: .92rem; }
+.replay-status { display: inline-flex; align-items: center; gap: .5rem; color: var(--color-cyan); }
+.replay-console progress { display: block; width: 100%; height: .65rem; margin: 1rem 0 .5rem; accent-color: var(--color-cyan); }
+.replay-progress-meta { font-size: .82rem; color: var(--color-muted); }
+.replay-controls { align-items: end; margin-top: 1rem; }
+.replay-buttons { justify-content: flex-start; gap: .45rem; }
+.replay-buttons .data-control { margin: 0; }
+.replay-primary { background: var(--color-cyan); color: var(--color-space); font-weight: 650; }
+.replay-console button:disabled { opacity: .48; cursor: default; }
+.replay-error, .replay-reset { margin-top: .75rem; }
+.replay-reset button + button { margin-left: .45rem; }

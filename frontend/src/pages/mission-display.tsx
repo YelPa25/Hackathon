@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
+import { useReplay } from '../services/replay-state'
 import { useMissionData } from '../services/mission'
 
 const utc = new Intl.DateTimeFormat('en-GB', {
@@ -27,11 +28,19 @@ export function Panel({ title, children }: { title: string; children: ReactNode 
   return <section className="surface data-panel"><h2>{title}</h2>{children}</section>
 }
 
-export function Resource<T>({ url, load, children }: {
-  url: string; load?: (url: string, signal: AbortSignal) => Promise<T>; children: (data: T) => ReactNode
+export function Resource<T>({ url, load, live, children }: {
+  url: string; live?: boolean; load?: (url: string, signal: AbortSignal) => Promise<T>; children: (data: T) => ReactNode
 }) {
   const [retry, setRetry] = useState(0)
-  const result = useMissionData<T>(url, retry, load)
+  const { state } = useReplay()
+  const result = useMissionData<T>(url, retry, load, live ? state?.cursor_utc : undefined)
+  if (live && result.state === 'ready') {
+    const snapshot = result.data as { cursor_utc?: string; replay?: { cursor_utc: string } }
+    const cursor = snapshot.cursor_utc ?? snapshot.replay?.cursor_utc
+    if (!state || cursor && cursor > state.cursor_utc) {
+      return <p className="surface data-panel" role="status">Synchronizing published mission time…</p>
+    }
+  }
   if (result.state === 'loading') return <p className="surface data-panel" role="status">Loading mission data…</p>
   if (result.state === 'error') return <section className="surface data-panel">
     <p role="alert">{result.message}</p>

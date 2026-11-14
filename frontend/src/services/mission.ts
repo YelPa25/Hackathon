@@ -19,12 +19,23 @@ export type ObservationPage = {
 }
 export type Latest = ObservationPage & { latest_missing: Observation[] }
 export type Mission = {
-  mission_day: number; cursor_utc: string; synthetic: true
+  crew_readings: Record<string, Observation>; cabin_latest_missing: Observation[]
+  mission_day: number; cursor_utc: string; synthetic: true; replay_status: Replay["status"]
   crew_summaries: Crew[]; cabin_readings: Observation[]
 }
 export type Replay = {
   dataset_id: string; mission_day: number; cursor_utc: string
-  status: 'PAUSED' | 'RUNNING' | 'COMPLETE'; visible_count: number
+  status: 'PAUSED' | 'RUNNING' | 'COMPLETE'; visible_count: number; revision: number
+  speed: ReplaySpeed
+}
+export type ReplaySpeed = 5 | 2 | 0.5
+export type ReplayAction = 'PLAY' | 'PAUSE' | 'NEXT_DAY' | 'NEXT_EVENT' | 'RESET' | 'SET_SPEED'
+export type ReplayView = Replay & {
+  historical_days: number; mission_days: number; playback_error: string | null
+  latest_activity: {
+    mission_day: number; observation_count: number; crew_count: number; cabin_count: number
+    first_utc: string | null; last_utc: string | null
+  } | null
 }
 export type Metric = { metric: string; unit: string; description: string; scope: 'person' | 'cabin'; measurement_cadence: string }
 export type Reference = { source_id: string; organization: string; title: string; url: string; use: string }
@@ -37,10 +48,13 @@ export type Dataset = {
 
 type Result<T> = { state: 'loading' } | { state: 'error'; message: string } | { state: 'ready'; data: T }
 
-async function fetchMissionData<T>(url: string, signal: AbortSignal): Promise<T> {
+export async function fetchMissionData<T>(
+  url: string, signal: AbortSignal, options?: RequestInit,
+): Promise<T> {
   const response = await fetch(url, {
+    ...options,
     cache: 'no-store',
-    headers: { Accept: 'application/json' },
+    headers: { Accept: 'application/json', ...options?.headers },
     signal: AbortSignal.any([signal, AbortSignal.timeout(5000)]),
   })
   if (!response.ok) {
@@ -84,9 +98,9 @@ export async function fetchObservationHistory(url: string, signal: AbortSignal):
 }
 
 export function useMissionData<T>(
-  url: string, retry = 0, loader: (url: string, signal: AbortSignal) => Promise<T> = fetchMissionData<T>,
+  url: string, retry = 0, loader: (url: string, signal: AbortSignal) => Promise<T> = fetchMissionData<T>, cutoff?: string,
 ): Result<T> {
-  const [response, setResponse] = useState<{ url: string; retry: number; result: Result<T> }>()
+  const [response, setResponse] = useState<{ url: string; retry: number; cutoff?: string; result: Result<T> }>()
   useEffect(() => {
     const controller = new AbortController()
     async function load() {
@@ -98,10 +112,15 @@ export function useMissionData<T>(
         result = { state: 'error', message: error instanceof Error && error.name === 'Error'
           ? error.message : 'The backend could not load this view.' }
       }
-      if (!controller.signal.aborted) setResponse({ url, retry, result })
+      if (!controller.signal.aborted) setResponse({ url, retry, cutoff, result })
     }
     void load()
     return () => controller.abort()
-  }, [url, retry, loader])
-  return response?.url === url && response.retry === retry ? response.result : { state: 'loading' }
+  }, [url, retry, loader, cutoff])
+  // While advancing, keep the previous published data visible during refresh. Hide it immediately after reset.
+  const previousCutoff = response?.cutoff
+  const current = previousCutoff === cutoff || (
+    response?.result.state === 'ready' && previousCutoff !== undefined && cutoff !== undefined && previousCutoff < cutoff
+  )
+  return response?.url === url && response.retry === retry && current ? response.result : { state: 'loading' }
 }

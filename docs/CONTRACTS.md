@@ -4,7 +4,7 @@ Version 1. HTTP uses `/api`, UTF-8 JSON, snake_case fields and RFC 3339 UTC time
 
 ## Dataset and normalization
 
-Set `ASTRA_DATASET_DIR` to the extracted dataset directory. Without an override, prefer `data-source/ASTRA_90day_dataset_v1` when present and otherwise use `ASTRA_90day_dataset_v1` at the project root. Relative overrides resolve from the project root. The manifest has no embedded hashes. Verify the manifest and the other allowlisted inputs against `SHA256SUMS.txt`. Pin the five verified runtime hashes in SQLite. Stage 02 does not open the future partition, full archive or evaluation CSV.
+Set `ASTRA_DATASET_DIR` to the extracted dataset directory. Without an override, prefer `data-source/ASTRA_90day_dataset_v1` when present and otherwise use `ASTRA_90day_dataset_v1` at the project root. Relative overrides resolve from the project root. The manifest has no embedded hashes. Verify the manifest and the other allowlisted inputs against `SHA256SUMS.txt`. Pin the five verified runtime hashes in SQLite. Only the replay writer opens the future partition. Runtime excludes the full archive and evaluation CSV.
 
 | Input | Contract |
 | --- | --- |
@@ -37,15 +37,16 @@ Reject malformed headers, extra or missing columns, invalid dates, unmatched sub
 
 ## Replay state
 
-`ReplayState = {dataset_id, revision, status, cursor_utc, mission_day, visible_count, speed?}`. Status is `PAUSED`, `RUNNING` or `COMPLETE`. Speed is a positive supported rate and can be omitted in the first release. Increment revision on each published state change. The initial cursor is `2040-02-14T23:59:59Z` and the terminal cursor is `2040-03-30T23:59:59Z`. All dataset timestamps have whole-second precision. Counts include missing rows.
+`ReplayState = {dataset_id, revision, status, cursor_utc, mission_day, visible_count, speed}`. Status is `PAUSED`, `RUNNING` or `COMPLETE`. Speed is real seconds per 24 simulated hours. It accepts 5 (Slow), 2 (Normal, default), or 0.5 (Fast). Increment revision on each published state change. The initial cursor is `2040-02-14T23:59:59Z` and the terminal cursor is `2040-03-30T23:59:59Z`. All dataset timestamps have whole-second precision. Counts include missing rows.
 
 | Event or command | Behavior |
 | --- | --- |
-| Bootstrap or `RESET` | Publish exactly the 6,252 history rows at Day 45 and enter `PAUSED`. Reset replaces replay-derived state and observations atomically using stable IDs. |
-| `PLAY` | From `PAUSED`, enter `RUNNING`. A backend timer advances a bounded simulated time using monotonic elapsed time. Apply all due rows in each transaction. |
+| Bootstrap or `RESET` | Publish exactly the 6,252 history rows at Day 45 and enter `PAUSED`. Reset removes only rows registered to this mission in `replay_observations`. It preserves speed, the pinned future checksum, historical rows, and unrelated records. |
+| `PLAY` | From `PAUSED`, enter `RUNNING`. A monotonic backend timer advances up to 24 simulated hours per tick and publishes every due row in one transaction. |
 | `PAUSE` | Stop scheduled advancement and keep the last committed cursor. |
 | `NEXT_EVENT` | While paused, advance to the earliest remaining timestamp and publish the full group. The endpoint never hands the timestamp to the browser before committing. |
 | `NEXT_DAY` | While paused, advance to the end of the next UTC mission day, publishing all intervening rows. |
+| `SET_SPEED` | Requires a supported `speed`. While playing, start a new timer interval at that speed. |
 | Terminal day | On reaching the terminal cursor, enter `COMPLETE` with 12,491 records. A next-event call while paused after the final group can close the remaining interval to Day 90 end. |
 | Restart | Restore the persisted cursor and rows. A persisted `RUNNING` state becomes `PAUSED`. Wall-clock downtime never advances the mission. |
 
@@ -56,17 +57,17 @@ Serialize replay writes and check `expected_revision` within the write transacti
 | Method and path | Request and response |
 | --- | --- |
 | GET `/api/health` | `{status, database_ready, dataset_ready}`. Return `200` after a successful SQLite schema/readiness check. `dataset_ready` is true when a verified historical import and its replay state are committed. On SQLite failure return `503` with `{"status":"unavailable","database_ready":false,"dataset_ready":false}`. |
-| GET `/api/mission` | Mission snapshot `{revision, cursor_utc, mission_day, replay_status, synthetic, crew_summaries, cabin_readings, insights}`. Summaries use Crew and Observation DTOs. |
+| GET `/api/mission` | Mission snapshot `{revision, cursor_utc, mission_day, replay_status, synthetic, crew_summaries, crew_readings, cabin_readings, cabin_latest_missing, insights}`. Summaries use Crew and Observation DTOs. |
 | GET `/api/crew` | `{items: Crew[]}`, where Crew is `{crew_id, display_name, role}`. |
 | GET `/api/crew/{crew_id}` | One Crew profile, including `age_years` and `activity_pref`. |
 | GET `/api/observations` | Optional `crew_id`, `scope`, `metric`, `context`, `from_utc` and `to_utc`, plus `limit` (default 100, maximum 500) and `cursor`. Return `{revision, cursor_utc, items, next_cursor}`. This serves histories and the replay timeline. |
 | GET `/api/observations/latest` | Same filters as history without `cursor` or `limit`. Require `crew_id` or `scope=cabin`. Return `{revision, cursor_utc, items, latest_missing, next_cursor: null}`. `items` contains the last valid reading per metric. `latest_missing` contains the newest observation per metric when it is missing. |
 | GET `/api/crew/{crew_id}/analysis` | Stage 04. Optional `metric`, `context`. Return `{revision, cursor_utc, baselines, findings}` for the selected crew member. |
-| GET `/api/replay` | Current `ReplayState`. The response contains only the published cursor and counts. |
-| POST `/api/replay` | Stage 03. `{command, expected_revision}` using the uppercase commands in the transition table, including `RESET`. Return the resulting `ReplayState`. |
+| GET `/api/replay` | `ReplayState` plus `historical_days`, `mission_days`, `playback_error`, and `latest_activity`. Activity summarizes only published replay-owned rows on the current day and is null at Day 45. |
+| POST `/api/replay` | Send `{command, expected_revision}` using the uppercase commands above. Add `speed` for `SET_SPEED`. Returns the same view as GET after commit. |
 | GET `/api/data` | `dataset_id`, `version`, `mission_type`, `provenance`, `mission_start_utc`, `mission_days`, `historical_days`, `cabin_total_pressure_assumed_mmhg`, `initialized`, `imported_at_utc`, `historical_count`, `historical_missing_count`, `source_status`, `replay`, `metrics`, `references`. `source_status` is `VERIFIED`, `UNAVAILABLE`, or `INVALID` for the current startup check. Metrics include source dictionary fields and `scope`. References use the source catalog columns. |
 
-Stage 02 mission summaries include crew identities and latest valid cabin observations. `insights` is empty until analysis is implemented. Use `scope=cabin` for cabin history. Date ranges wholly after the cutoff return empty lists. Time filters require whole-second UTC.
+Mission summaries include the latest valid shareable observation per crew member and the latest valid cabin readings. `cabin_latest_missing` contains any newer missing samples. Replay activity fields are `mission_day`, `observation_count`, `crew_count`, `cabin_count`, `first_utc`, and `last_utc`. Timestamp bounds are null for a day with no published rows. `insights` is empty until analysis is implemented. Use `scope=cabin` for cabin history. Date ranges wholly after the cutoff return empty lists. Time filters require whole-second UTC.
 
 Observation responses use the normalized CSV fields except `note`. Sort history and timeline by `(timestamp_utc, observation_id)` ascending with a stable continuation token bound to filters and revision. Time filters are inclusive and the replay cutoff always takes precedence. Cabin feeds and mission summaries exclude private check-ins. Access to private check-in fields requires a person query with an explicit crew ID. A cross-crew insight may show an aggregate opted-in count and cabin observation IDs, without private text, individual scores, participant IDs or flags.
 

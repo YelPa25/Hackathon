@@ -96,8 +96,11 @@ export function HealthChart({ records, series, window, title }: {
   </figure>
 }
 
-export function HistoryRecords({ records }: { records: Observation[] }) {
-  return <details className="health-details health-records">
+export function HistoryRecords({ records, open, onOpenChange }: {
+  records: Observation[]; open: boolean; onOpenChange: (open: boolean) => void
+}) {
+  return <details className="health-details health-records" open={open}
+    onToggle={(event) => onOpenChange(event.currentTarget.open)}>
     <summary>Detailed records <span>{records.length} observations</span></summary>
     <div className="observation-scroll" role="region" aria-label="Historical readings" tabIndex={0}>
       <table className="observation-table">

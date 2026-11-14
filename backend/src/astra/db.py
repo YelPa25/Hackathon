@@ -3,7 +3,7 @@ from contextlib import closing, contextmanager
 from pathlib import Path
 from typing import Iterator
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 SCHEMA = (
     """CREATE TABLE datasets (
@@ -67,6 +67,14 @@ SCHEMA = (
         ON observations (mission_id, crew_id, metric, timestamp_utc, observation_id)""",
 )
 
+REPLAY_MIGRATION = (
+    "ALTER TABLE replay_state ADD COLUMN speed REAL NOT NULL DEFAULT 2 CHECK (speed IN (0.5, 2, 5))",
+    "ALTER TABLE replay_state ADD COLUMN source_sha256 TEXT",
+    """CREATE TABLE replay_observations (
+        observation_id TEXT PRIMARY KEY REFERENCES observations (observation_id) ON DELETE CASCADE
+    )""",
+)
+
 
 def connect_database(path: Path, mode: str = "rw") -> sqlite3.Connection:
     connection = sqlite3.connect(f"{path.as_uri()}?mode={mode}", uri=True, timeout=5.0)
@@ -89,9 +97,12 @@ def initialize_database(path: Path) -> None:
         version = connection.execute("PRAGMA user_version").fetchone()[0]
         if version == SCHEMA_VERSION:
             return
-        if version != 0:
+        if version not in (0, 1):
             raise sqlite3.DatabaseError(f"Unsupported ASTRA schema version {version}")
-        for statement in SCHEMA:
+        if version == 0:
+            for statement in SCHEMA:
+                connection.execute(statement)
+        for statement in REPLAY_MIGRATION:
             connection.execute(statement)
         connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
 

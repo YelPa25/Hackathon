@@ -1,7 +1,8 @@
+import asyncio
 import csv
 import logging
 import sqlite3
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from typing import Literal
 
 from fastapi import FastAPI, Request, Response
@@ -15,6 +16,7 @@ from astra.config import Settings
 from astra.db import SCHEMA_VERSION, initialize_database, probe_database, read_snapshot
 from astra.importer import install_history
 from astra.reads import ApiError, replay_state
+from astra.replay import ReplayEngine
 from astra.routes import router
 
 logger = logging.getLogger("astra")
@@ -43,12 +45,15 @@ def error(status: int, code: str, message: str, headers: dict[str, str] | None =
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings if settings is not None else Settings.from_environment()
 
+    engine = ReplayEngine(settings.database_path, settings.dataset_dir)
+
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         app.state.schema_ready = False
         app.state.source_status = "UNAVAILABLE"
         try:
             initialize_database(settings.database_path)
+            engine.pause_after_restart()
             app.state.schema_ready = True
         except (OSError, sqlite3.Error):
             logger.exception("Could not initialize SQLite")
@@ -62,14 +67,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             except (ValueError, csv.Error, sqlite3.Error) as exc:
                 app.state.source_status = "INVALID"
                 logger.error("Historical dataset was not installed: %s", exc)
-        yield
+        timer = asyncio.create_task(engine.run())
+        try:
+            yield
+        finally:
+            timer.cancel()
+            with suppress(asyncio.CancelledError):
+                await timer
 
     app = FastAPI(title="ASTRA 2.0", version="1.0", lifespan=lifespan,
                   openapi_url="/api/openapi.json", docs_url=None, redoc_url=None)
     app.state.database_path = settings.database_path
+    app.state.replay_engine = engine
     if settings.environment == "development":
         app.add_middleware(CORSMiddleware, allow_origins=list(settings.cors_origins),
-                           allow_methods=["GET"], allow_headers=["Accept"])
+                           allow_methods=["GET", "POST"], allow_headers=["Accept", "Content-Type"])
 
     @app.middleware("http")
     async def no_cache(request: Request, call_next):

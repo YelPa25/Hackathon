@@ -45,6 +45,11 @@ function ReadingDetails({ title, records }: { title: string; records: Observatio
   </details>
 }
 
+function daysSinceReading(cutoff: string, readings: Observation[]) {
+  const oldest = readings.map(({ timestamp_utc }) => timestamp_utc.slice(0, 10)).sort()[0]
+  return oldest ? (Date.parse(cutoff.slice(0, 10)) - Date.parse(oldest)) / 86_400_000 : 0
+}
+
 function PrimaryReadings({ latest }: { latest: Latest }) {
   return <Panel title="Health overview">
     <p className="health-section-note">Latest available measurements · Synthetic</p>
@@ -56,6 +61,7 @@ function PrimaryReadings({ latest }: { latest: Latest }) {
       const valid = entries.flatMap(({ reading }) => reading ? [reading] : [])
       const gaps = entries.flatMap(({ missing }) => missing ? [missing] : [])
       const isPressure = metrics === pressureMetrics
+      const age = daysSinceReading(latest.cursor_utc, valid)
       let status = readingStatus(valid[0], gaps[0])
       if (isPressure && valid.length === 1) status = { text: 'Partial reading', tone: 'warn' }
       if (isPressure && valid.length === 2 && valid[0].timestamp_utc !== valid[1].timestamp_utc) {
@@ -69,6 +75,10 @@ function PrimaryReadings({ latest }: { latest: Latest }) {
         </p>
         {isPressure && <p className="health-pressure-label">Systolic / Diastolic</p>}
         <p className="health-reading-status" data-tone={status.tone}><span className="status-dot" aria-hidden="true" />{status.text}</p>
+        {age > 0 && <p className="health-pressure-label">
+          {isPressure && valid.length === 2 && valid[0].timestamp_utc !== valid[1].timestamp_utc ? 'Older component: ' : 'Recorded '}
+          {age} {age === 1 ? 'day' : 'days'} earlier
+        </p>}
         <ReadingDetails title={title} records={[...valid, ...gaps]} />
       </section>
     })}</div>
@@ -103,9 +113,10 @@ function historyWindow(cutoff: string, days: HistoryDays): HistoryWindow {
   return { from: start.toISOString().replace('.000Z', 'Z'), to: cutoff }
 }
 
-function MeasurementHistory({ crew, latest, metric, days, setMetric, setDays }: {
+function MeasurementHistory({ crew, latest, metric, days, setMetric, setDays, recordsOpen, setRecordsOpen }: {
   crew: string; latest: Latest; metric: string; days: HistoryDays
   setMetric: (metric: string) => void; setDays: (days: HistoryDays) => void
+  recordsOpen: boolean; setRecordsOpen: (open: boolean) => void
 }) {
   const available = [...new Set([...latest.items, ...latest.latest_missing].map((item) => item.metric))].sort()
   const choices = available.filter((key) => !pressureMetrics.includes(key))
@@ -138,7 +149,7 @@ function MeasurementHistory({ crew, latest, metric, days, setMetric, setDays }: 
     <Resource<Observation[]> url={'/api/observations?' + query} load={fetchObservationHistory}>{(records) =>
       records.length ? <>
         <HealthChart records={records} series={series} window={window} title={title} />
-        <HistoryRecords key={crew + selected} records={records} />
+        <HistoryRecords records={records} open={recordsOpen} onOpenChange={setRecordsOpen} />
       </> : <p className="health-chart-empty">No recorded measurements in this range. Select a longer range to look further back.</p>
     }</Resource>
   </section>
@@ -146,8 +157,18 @@ function MeasurementHistory({ crew, latest, metric, days, setMetric, setDays }: 
 
 export default function CrewHealth() {
   const [params, setParams] = useSearchParams()
-  const [metric, setMetric] = useState('resting_heart_rate')
-  const [days, setDays] = useState<HistoryDays>(45)
+  const [recordsOpen, setRecordsOpen] = useState(false)
+  const metric = params.get('metric') ?? 'resting_heart_rate'
+  const range = Number(params.get('days'))
+  const days = ranges.find((value) => value === range) ?? 45
+
+  function select(key: string, value: string) {
+    setParams((previous) => {
+      const next = new URLSearchParams(previous)
+      next.set(key, value)
+      return next
+    }, { replace: true })
+  }
   return <Resource<{ items: Crew[] }> url="/api/crew">{({ items }) => {
     const selected = items.find((crew) => crew.crew_id === params.get('crew')) ?? items[0]
     if (!selected) return <p>No crew profiles loaded.</p>
@@ -156,7 +177,7 @@ export default function CrewHealth() {
       <Panel title="Crew member">
         <div className="health-profile">
           <label className="data-label">Select astronaut
-            <select value={selected.crew_id} onChange={(event) => setParams({ crew: event.target.value }, { replace: true })}>
+            <select value={selected.crew_id} onChange={(event) => select('crew', event.target.value)}>
               {items.map((crew) => <option key={crew.crew_id} value={crew.crew_id}>{crew.display_name}</option>)}
             </select>
           </label>
@@ -166,11 +187,12 @@ export default function CrewHealth() {
           </div>}</Resource>
         </div>
       </Panel>
-      <Resource<Latest> url={'/api/observations/latest?crew_id=' + id}>{(latest) => <>
+      <Resource<Latest> url={'/api/observations/latest?crew_id=' + id} live>{(latest) => <>
         <PrimaryReadings latest={latest} />
         <MeasurementHistory crew={selected.crew_id} latest={latest} metric={metric} days={days}
-          setMetric={setMetric} setDays={setDays} />
-        <OtherReadings latest={latest} select={setMetric} />
+          setMetric={(value) => select('metric', value)} setDays={(value) => select('days', String(value))}
+          recordsOpen={recordsOpen} setRecordsOpen={setRecordsOpen} />
+        <OtherReadings latest={latest} select={(value) => select('metric', value)} />
       </>}</Resource>
     </div>
   }}</Resource>

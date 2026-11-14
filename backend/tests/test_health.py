@@ -21,7 +21,7 @@ def test_health_initializes_schema_without_source_data(tmp_path):
         assert path.is_file()
         with closing(sqlite3.connect(path)) as connection:
             tables = {name for (name,) in connection.execute("SELECT name FROM sqlite_schema WHERE type = 'table'")}
-            assert tables == {"crew", "datasets", "metrics", "observations", "replay_state"}
+            assert tables == {"crew", "datasets", "metrics", "observations", "replay_state", "replay_observations"}
             assert connection.execute("SELECT COUNT(*) FROM observations").fetchone()[0] == 0
         for route in ("/api/replay", "/api/observations", "/api/crew", "/api/mission", "/api/data"):
             response = client.get(route)

@@ -66,3 +66,13 @@ Stage 03 awaits approval. It will add chronological replay controls and publicat
 Stage 02 was checkpointed locally at bb5b2e1 before the Crew Health changes. Crew Health now groups primary readings into six compact cards with keyboard-accessible details. Secondary metrics stay accessible and link to history. The chart uses 7, 30, or 45 UTC calendar days of existing API data and follows all continuation tokens. Existing heart-rate metric names select resting, exercise, or recovery observations separately.
 
 Frontend lint, TypeScript, and production build passed. An in-app browser pass verified all four crew, indicator and range changes, reading details, table expansion, missing samples, the other three screens, and layouts at 1440, 834, 390, and 320 CSS pixels. See the [Stage 02.5 verification notes](STAGE_02_VERIFICATION.md#stage-025--crew-health). The backend, database and dataset were only read for verification.
+
+## Stage 03
+
+Implemented backend-owned chronological replay using the 6,239 original future CSV observations. SQLite schema version 2 upgrades the existing database in place. Play, Pause, Resume, Next Day, Next Event, Reset Replay and three speeds are available in Mission Replay. The frontend polls the backend and refreshes the published snapshots.
+
+- All 21 backend tests passed. Frontend lint, TypeScript and the production build passed.
+- Verified the browser workflow in isolation through Day 51, including pause and resume, disconnection, restart, cross-page updates, and reset. The default database is still at Day 45 with 6,252 observations.
+- Verified all 17 source file hashes. A Day 46 query returned no observations at the live Day 45 cursor, and direct and proxied access to private CSV paths returned 404.
+- Fixed Detailed records collapsing on a playback tick. An isolated browser run confirmed the table stays open as rows refresh, stays closed when dismissed, and can be reopened by keyboard. Frontend lint, type check, and production build passed.
+- See the [Stage 03 verification report](STAGE_03_VERIFICATION.md). Stage 03 is ready for review. Stage 04 awaits approval.

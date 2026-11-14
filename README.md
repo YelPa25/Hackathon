@@ -1,6 +1,6 @@
 # ASTRA 2.0
 
-ASTRA is a local, non-clinical astronaut health and mission replay prototype. Stage 02 opens a fictional mission at the end of Day 45 with four synthetic crew profiles and the first 45 days of stored observations.
+ASTRA is a local, non-clinical astronaut health and mission replay prototype. A fresh mission opens at the end of Day 45 with four synthetic crew profiles. Stage 03 reveals recorded observations through Day 90 as mission time advances.
 
 ## Start on Windows
 
@@ -25,9 +25,19 @@ npm.cmd ci
 npm.cmd run dev
 ```
 
-Open the [ASTRA console](http://127.0.0.1:5180/). Mission Overview shows four crew members and cabin readings. Crew Health shows crew profiles, latest readings and historical samples. Mission Replay opens at Day 45, paused. Data & Science shows synthetic provenance, coverage and references.
+Open the [ASTRA console](http://127.0.0.1:5180/). Mission Overview shows four crew members and cabin readings. Crew Health shows crew profiles, latest readings and historical samples. Mission Replay opens at the saved position. A fresh database starts at Day 45, and a backend restart pauses active playback. Data & Science shows synthetic provenance, coverage and references.
 
 Press Ctrl+C in each terminal to stop its process. If verifying recovery, restart FastAPI and select **Retry** on any view that failed while it was down. This checkout uses ports 8050 and 5180.
+
+## Verify replay
+
+1. Open [ASTRA](http://127.0.0.1:5180/) and select **Mission Replay**. A fresh database opens on Day 45.
+2. Open **Crew Health** and note the latest date on a chart. Return to Mission Replay and select **Next Day**. Day 46 publishes 141 records. Return to Crew Health and look for a new sample, for example Hana Tanaka's sleep duration on 15 February.
+3. Step through several days, choose a speed, then use **Resume**, **Pause**, and **Resume** again. **Next Event** while paused publishes one complete timestamp group.
+4. Restart the backend with the same database path and verify the saved position. Select **Reset Replay** and confirm. Check that Mission Overview and Crew Health return to the Day 45 view.
+5. To rehearse in isolation, set `ASTRA_DB_PATH` to a new temporary SQLite path before starting the backend. Restore the previous environment setting when finished.
+
+Playback runs on the backend even when you leave the replay page. Use one backend process per database. Reset preserves installed history, source files, unrelated database records, and playback speed.
 
 ## Configuration
 

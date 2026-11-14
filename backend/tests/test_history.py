@@ -104,7 +104,8 @@ def test_restart_keeps_ids_count_and_import_timestamp(settings, source_dir, tmp_
 def test_every_observation_endpoint_respects_persisted_cutoff(client, settings):
     assert client.get("/api/replay").json() == {
         "dataset_id": "ASTRA-SYN-90D-01", "revision": 0, "status": "PAUSED",
-        "cursor_utc": CUTOFF, "mission_day": 45, "visible_count": 6252,
+        "cursor_utc": CUTOFF, "mission_day": 45, "visible_count": 6252, "speed": 2,
+        "historical_days": 45, "mission_days": 90, "latest_activity": None, "playback_error": None,
     }
     cases = [("/api/observations", {}), ("/api/observations/latest", {"scope": "cabin"}),
              ("/api/observations/latest", {"crew_id": "AST-001"})]
@@ -132,7 +133,7 @@ def test_every_observation_endpoint_respects_persisted_cutoff(client, settings):
     for path in ("/api/archive", "/all_observations_FULL_ARCHIVE.csv",
                  "/EVALUATION_ONLY_scenario_truth_NOT_FOR_LIVE_APP.csv", "/replay_future_HIDDEN_DAY46_to_DAY90.csv"):
         assert client.get(path).status_code == 404
-    assert client.post("/api/replay", json={"command": "NEXT_DAY", "expected_revision": 0}).status_code == 405
+    assert client.post("/api/replay", json={"command": "NEXT_DAY", "expected_revision": 1}).status_code == 409
     for path in ("/api/mission", "/api/replay", "/api/data", "/api/observations"):
         body = client.get(path).text
         for forbidden in ("EVALUATION_ONLY", "rest_hr_ref_bpm", "hidden_future_file", '"note"', "future_replay_records"):

@@ -7,9 +7,13 @@ from fastapi import APIRouter, Request
 from astra.db import read_snapshot
 from astra.models import (
     CrewList, CrewProfile, DatasetInfo, DatasetMetadata, LatestObservations, Metric, Mission,
-    ObservationPage, ReplayState,
+    ObservationPage, ReplayCommand, ReplayState, ReplayView,
 )
-from astra.reads import ApiError, HistoryRequest, LatestRequest, ObservationFilters, crew_profile, history_page, latest_observations, replay_state
+from astra.reads import (
+    ApiError, HistoryRequest, LatestRequest, ObservationFilters, crew_profile, history_page,
+    latest_observations, observation_dto, replay_state, visible_observations,
+)
+from astra.replay import replay_view
 
 router = APIRouter(prefix="/api")
 
@@ -60,18 +64,36 @@ def latest(request: Request, query: LatestRequest):
 @router.get("/mission", response_model=Mission)
 def mission(request: Request):
     with mission_snapshot(request) as (connection, replay):
-        readings, _ = latest_observations(connection, replay, ObservationFilters(scope="cabin"))
+        readings, missing = latest_observations(connection, replay, ObservationFilters(scope="cabin"))
+        summaries = crew_rows(connection)
+        crew_readings = {}
+        for profile in summaries:
+            crew_id = profile["crew_id"]
+            sql, values = visible_observations(replay, ObservationFilters(crew_id=crew_id), include_private=False)
+            latest = connection.execute(
+                sql + " AND quality = 'VALID' ORDER BY timestamp_utc DESC, observation_id DESC LIMIT 1", values,
+            ).fetchone()
+            if latest is not None:
+                crew_readings[crew_id] = observation_dto(latest)
         return {
             "revision": replay.revision, "cursor_utc": replay.cursor_utc, "mission_day": replay.mission_day,
-            "replay_status": replay.status, "crew_summaries": crew_rows(connection), "cabin_readings": readings,
+            "replay_status": replay.status, "crew_summaries": summaries, "crew_readings": crew_readings,
+            "cabin_readings": readings, "cabin_latest_missing": missing,
             "insights": [],
         }
 
 
 @router.get("/replay")
-def replay(request: Request) -> ReplayState:
-    with mission_snapshot(request) as (_, state):
-        return state
+def replay(request: Request) -> ReplayView:
+    with mission_snapshot(request) as (connection, _):
+        return replay_view(connection, request.app.state.replay_engine.error)
+
+
+@router.post("/replay")
+async def control_replay(request: Request, command: ReplayCommand) -> ReplayView:
+    if not request.app.state.schema_ready:
+        raise ApiError(503, "database_unavailable", "Mission storage is unavailable.")
+    return await request.app.state.replay_engine.command(command)
 
 
 @router.get("/data")

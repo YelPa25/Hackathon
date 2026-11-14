@@ -1,4 +1,4 @@
-"""Stage 02 ingest. This module opens only the historical partition and its metadata."""
+"""Historical ingest and the shared source observation adapter."""
 
 import csv
 import hashlib
@@ -6,6 +6,7 @@ import io
 import json
 import re
 import sqlite3
+from collections.abc import Iterable
 from contextlib import closing
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
@@ -47,7 +48,7 @@ class DatasetError(ValueError):
     """The source bundle cannot be safely installed."""
 
 
-def verified_inputs(directory: Path) -> tuple[dict[str, bytes], dict[str, str]]:
+def verified_inputs(directory: Path, names: tuple[str, ...] = INPUTS) -> tuple[dict[str, bytes], dict[str, str]]:
     listed = {}
     for line in (directory / "SHA256SUMS.txt").read_text(encoding="utf-8").splitlines():
         parts = line.split(maxsplit=1)
@@ -56,7 +57,7 @@ def verified_inputs(directory: Path) -> tuple[dict[str, bytes], dict[str, str]]:
         listed[parts[1]] = parts[0]
     inputs = {}
     hashes = {}
-    for name in INPUTS:
+    for name in names:
         try:
             data = (directory / name).read_bytes()
         except FileNotFoundError as exc:
@@ -149,13 +150,15 @@ def load_metrics(data: bytes) -> dict[str, Metric]:
     return metrics
 
 
-def load_history(data: bytes, metadata: DatasetMetadata, metrics: dict[str, Metric]) -> list[tuple]:
+def observation_records(
+    rows: Iterable[dict[str, str]], metadata: DatasetMetadata, metrics: dict[str, Metric],
+    first_day: int, last_day: int,
+) -> list[tuple]:
     start = parse_utc(metadata.mission_start_utc)
     previous = start
     observed_ids = set()
     records = []
-    missing_count = 0
-    for row in csv_rows(data, (*OBSERVATION_FIELDS, "note"), HISTORY):
+    for row in rows:
         observation_id = row["observation_id"]
         metric = metrics.get(row["metric"])
         if (not re.fullmatch(r"SIM-[0-9]+", observation_id) or observation_id in observed_ids
@@ -165,7 +168,7 @@ def load_history(data: bytes, metadata: DatasetMetadata, metrics: dict[str, Metr
             raise DatasetError(f"Invalid observation identity or metric: {observation_id}")
         timestamp = parse_utc(row["timestamp_utc"])
         day = (timestamp.date() - start.date()).days + 1
-        if timestamp < previous or not 1 <= day <= metadata.historical_days or row["mission_day"] != str(day):
+        if timestamp < previous or not first_day <= day <= last_day or row["mission_day"] != str(day):
             raise DatasetError(f"Unexpected timestamp or mission day: {observation_id}")
         cabin = metric.scope == "cabin"
         if (cabin and (row["crew_id"], row["subject_id"], row["privacy"]) != ("", "CABIN-01", "shared_environment")
@@ -182,7 +185,6 @@ def load_history(data: bytes, metadata: DatasetMetadata, metrics: dict[str, Metr
         if row["quality"] == "MISSING":
             if raw or not reason.strip():
                 raise DatasetError(f"Invalid missing reading: {observation_id}")
-            missing_count += 1
         else:
             if row["quality"] != "VALID" or reason or not re.fullmatch(r"-?[0-9]+(?:\.[0-9]+)?", raw):
                 raise DatasetError(f"Invalid numeric reading: {observation_id}")
@@ -200,9 +202,13 @@ def load_history(data: bytes, metadata: DatasetMetadata, metrics: dict[str, Metr
         records.append(tuple(payload[field] for field in OBSERVATION_FIELDS))
         observed_ids.add(observation_id)
         previous = timestamp
-    if len(records) != HISTORICAL_COUNT or missing_count != MISSING_COUNT:
-        raise DatasetError("Unexpected historical or missing row count")
     return records
+
+
+def insert_observations(connection: sqlite3.Connection, records: list[tuple]) -> None:
+    fields = ", ".join(OBSERVATION_FIELDS)
+    placeholders = ", ".join("?" for _ in OBSERVATION_FIELDS)
+    connection.executemany(f"INSERT INTO observations ({fields}) VALUES ({placeholders})", records)
 
 
 def install_history(path: Path, directory: Path) -> str:
@@ -219,7 +225,10 @@ def install_history(path: Path, directory: Path) -> str:
 
         crew = load_crew(inputs["crew_profiles.csv"])
         metrics = load_metrics(inputs["metric_dictionary.csv"])
-        records = load_history(inputs[HISTORY], metadata, metrics)
+        rows = list(csv_rows(inputs[HISTORY], (*OBSERVATION_FIELDS, "note"), HISTORY))
+        if len(rows) != HISTORICAL_COUNT or sum(row["quality"] == "MISSING" for row in rows) != MISSING_COUNT:
+            raise DatasetError("Unexpected historical or missing row count")
+        records = observation_records(rows, metadata, metrics, 1, metadata.historical_days)
         cutoff = parse_utc(metadata.mission_start_utc) + timedelta(days=metadata.historical_days, seconds=-1)
         imported = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         connection.execute(
@@ -235,11 +244,10 @@ def install_history(path: Path, directory: Path) -> str:
                 VALUES (:metric, :unit, :description, :scope, :provenance, :measurement_cadence, :is_nasa_measured)""",
             [metric.model_dump() for metric in metrics.values()],
         )
-        fields = ", ".join(OBSERVATION_FIELDS)
-        placeholders = ", ".join("?" for _ in OBSERVATION_FIELDS)
-        connection.executemany(f"INSERT INTO observations ({fields}) VALUES ({placeholders})", records)
+        insert_observations(connection, records)
         connection.execute(
-            "INSERT INTO replay_state VALUES (1, ?, 0, 'PAUSED', ?, ?, ?)",
+            """INSERT INTO replay_state (singleton, dataset_id, revision, status, cursor_utc, mission_day, visible_count)
+            VALUES (1, ?, 0, 'PAUSED', ?, ?, ?)""",
             (metadata.dataset_id, cutoff.strftime("%Y-%m-%dT%H:%M:%SZ"), metadata.historical_days, len(records)),
         )
     return "imported"

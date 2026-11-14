@@ -75,7 +75,9 @@ def crew_profile(connection: sqlite3.Connection, crew_id: str) -> dict:
     return dict(row)
 
 
-def visible_observations(replay: ReplayState, filters: ObservationFilters) -> tuple[str, list]:
+def visible_observations(
+    replay: ReplayState, filters: ObservationFilters, *, include_private: bool = True,
+) -> tuple[str, list]:
     """Build the common observation read, locked to the published mission and cursor."""
     clauses = ["mission_id = ?", "timestamp_utc <= ?"]
     values = [replay.dataset_id, replay.cursor_utc]
@@ -90,7 +92,7 @@ def visible_observations(replay: ReplayState, filters: ObservationFilters) -> tu
         if parameter is not None:
             clauses.append(f"{column} {operator} ?")
             values.append(parameter)
-    if filters.crew_id is None:
+    if filters.crew_id is None or not include_private:
         clauses.append("privacy <> 'private_health'")
     return "SELECT * FROM observations WHERE " + " AND ".join(clauses), values
 
