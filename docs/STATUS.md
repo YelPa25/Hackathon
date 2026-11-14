@@ -47,3 +47,15 @@ Stage 01 is ready for functional review. Stage 02 awaits approval and begins wit
 - NOT RUN for full network disconnection. Connectivity testing stopped and restarted FastAPI only.
 
 No functional blockers remain for Stage 01 review. Stage 02 awaits approval.
+
+## Stage 02
+
+Implemented transactional historical ingest and connected all four screens to the stored mission data. Startup installed schema version 1 in `backend/var/astra.sqlite3`. The verified import contains 6,252 observations, four crew profiles, 18 metrics and 18 explicitly missing readings. The replay cursor is paused at `2040-02-14T23:59:59Z`. An unchanged bundle reuses the committed import.
+
+- Confirmed that all 17 source file hashes match their pre-stage values.
+- Passed 15 backend tests, frontend lint, TypeScript and production build. See the [Stage 02 verification report](STAGE_02_VERIFICATION.md) for exact commands and browser checks.
+- The live frontend on 5180 and FastAPI on 8050 serve Day 1–45 only. Verified crew and metric selection, cabin readings, Day 45, outage and Retry recovery, and persistence after restart.
+
+- Polished metric labels and reading typography across the cabin and crew cards, history selector, and metric dictionary. Frontend lint, type check, and production build passed. Verified the cabin and crew labels and switched the history to SpO₂ in the browser.
+
+Stage 03 awaits approval. It will add chronological replay controls and publication through the existing cutoff boundary.

@@ -9,7 +9,7 @@ from astra.config import Settings
 from astra.main import create_app
 
 
-def test_health_creates_empty_database_and_returns_contract(tmp_path):
+def test_health_initializes_schema_without_source_data(tmp_path):
     path = tmp_path / "new" / "astra.sqlite3"
     assert not path.parent.exists()
     settings = Settings(environment="test", database_path=path, dataset_dir=tmp_path / "absent-dataset")
@@ -20,7 +20,13 @@ def test_health_creates_empty_database_and_returns_contract(tmp_path):
         assert response.headers["cache-control"] == "no-store"
         assert path.is_file()
         with closing(sqlite3.connect(path)) as connection:
-            assert connection.execute("SELECT name FROM sqlite_schema").fetchall() == []
+            tables = {name for (name,) in connection.execute("SELECT name FROM sqlite_schema WHERE type = 'table'")}
+            assert tables == {"crew", "datasets", "metrics", "observations", "replay_state"}
+            assert connection.execute("SELECT COUNT(*) FROM observations").fetchone()[0] == 0
+        for route in ("/api/replay", "/api/observations", "/api/crew", "/api/mission", "/api/data"):
+            response = client.get(route)
+            assert response.status_code == 503
+            assert response.json()["error"]["code"] == "dataset_unavailable"
 
 
 def test_probe_detects_database_lost_after_startup(tmp_path):
@@ -46,8 +52,7 @@ def test_invalid_database_starts_with_honest_health(tmp_path):
 
 def test_error_contract_and_private_routes(tmp_path):
     with TestClient(create_app(Settings(environment="test", database_path=tmp_path / "astra.db"))) as client:
-        for path in ("/api/replay", "/api/observations", "/api/crew", "/api/mission", "/api/data",
-                     "/replay_future_HIDDEN_DAY46_to_DAY90.csv",
+        for path in ("/api/crew/AST-001/analysis", "/replay_future_HIDDEN_DAY46_to_DAY90.csv",
                      "/EVALUATION_ONLY_scenario_truth_NOT_FOR_LIVE_APP.csv"):
             response = client.get(path)
             assert response.status_code == 404

@@ -1,6 +1,7 @@
 import { ArrowUpRight, Database, Menu, Orbit, Radio, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router'
+import { CrewHealth, DataScience, MissionOverview, MissionReplay } from '../pages/MissionData'
 import { screens } from '../pages/screens'
 import { useHealth } from '../services/health'
 import type { Connection } from '../services/health'
@@ -61,22 +62,19 @@ function Readiness({ connection }: { connection: Connection }) {
 }
 
 function Screen({ screen, connection }: { screen: typeof screens[number]; connection: Connection }) {
-  const { title, description, empty, detail, icon: Icon } = screen
+  const { title, description } = screen
+  const content = {
+    '/': <MissionOverview readiness={<Readiness connection={connection} />} />,
+    '/crew-health': <CrewHealth />,
+    '/mission-replay': <MissionReplay />,
+    '/data-and-science': <DataScience />,
+  }[screen.path]
   return <section className="screen workspace-inner" aria-labelledby="screen-title" data-enter>
     <header className="screen-heading">
       <h1 id="screen-title">{title}</h1>
       <p>{description}</p>
     </header>
-    <div className={screen.path === '/' ? 'overview-grid' : undefined}>
-      <section className="empty surface" aria-labelledby="empty-title">
-        <div className="panel-heading">
-          <span className="panel-symbol"><Icon size={21} aria-hidden="true" /></span>
-          <h2 id="empty-title">{empty}</h2>
-        </div>
-        <p>{detail}</p>
-      </section>
-      {screen.path === '/' && <Readiness connection={connection} />}
-    </div>
+    {content}
   </section>
 }
 

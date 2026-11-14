@@ -4,12 +4,12 @@ Version 1. HTTP uses `/api`, UTF-8 JSON, snake_case fields and RFC 3339 UTC time
 
 ## Dataset and normalization
 
-Set `ASTRA_DATASET_DIR` to the extracted dataset directory. By default, resolve `data-source/ASTRA_90day_dataset_v1` relative to the project root. For the current layout set the variable to the sibling of `docs` named `ASTRA_90day_dataset_v1`. Treat all original files as read-only. The backend opens explicit file names and verifies corresponding SHA-256 values. Pin input hashes in SQLite so a changed source cannot continue an existing replay.
+Set `ASTRA_DATASET_DIR` to the extracted dataset directory. Without an override, prefer `data-source/ASTRA_90day_dataset_v1` when present and otherwise use `ASTRA_90day_dataset_v1` at the project root. Relative overrides resolve from the project root. The manifest has no embedded hashes. Verify the manifest and the other allowlisted inputs against `SHA256SUMS.txt`. Pin the five verified runtime hashes in SQLite. Stage 02 does not open the future partition, full archive or evaluation CSV.
 
 | Input | Contract |
 | --- | --- |
 | `dataset_manifest.json` | Dataset ID, generator version, mission dates and duration, 45/45 split, synthetic flag, CO₂ pressure assumption, reference metadata and limitations. Only reviewable provenance fields go to the UI. |
-| `crew_profiles.csv` | Four unique IDs `AST-001` to `AST-004`. Use `crew_id`, `display_name` and `role` for the profile DTO. Generator seed parameters such as `rest_hr_ref_bpm`, `sys_ref_mmhg` and `sleep_tendency_h` do not enter runtime baselines. |
+| `crew_profiles.csv` | Four unique IDs `AST-001` to `AST-004`. Use `crew_id`, `display_name` and `role` for crew summaries, plus `age_years` and `activity_pref` for profile details. Generator seed parameters such as `rest_hr_ref_bpm`, `sys_ref_mmhg` and `sleep_tendency_h` do not enter runtime baselines. |
 | `metric_dictionary.csv` | 18 unique metric keys, canonical unit, description, cadence and synthetic provenance. Validate values against the dictionary and the source's context and scope. |
 | `scientific_sources.csv` | Allowlist source ID, organization, title, URL, stated use and raw-data-fit flag for citation and provenance. |
 | `replay_history_DAY01_to_DAY45.csv` | 6,252 original rows. Only this partition is published at initialization. |
@@ -33,7 +33,7 @@ observation_id,mission_id,crew_id,subject_id,scope,timestamp_utc,mission_day,met
 | `privacy`, `share_cabin_context` | `crew`, `private_health` or `shared_environment`. Parse explicit true/false. Only eligible, opted-in valid headache reports may contribute to cabin aggregates. Scope private fields to the selected astronaut. This local demo has no per-user authentication. |
 | `note` | Preserve the original column in the immutable CSV. Exclude it from runtime DTOs, queries and analysis because it can describe engineered scenarios. |
 
-Reject malformed headers, extra or missing columns, invalid dates, unmatched subject/metric/context combinations and duplicate IDs. An exact already-published row can be treated as a retry. A repeated ID with different normalized fields is an error. Blank nullable fields never become zero. Retain CO₂ partial pressure in `mmHg` and derived concentration in `ppm` as related observations. Use partial pressure as the primary CO₂ signal. For any displayed conversion, label the assumed 760 mmHg cabin pressure and avoid counting both as independent evidence.
+Reject malformed headers, extra or missing columns, invalid dates, unmatched subject/metric/context combinations and duplicate IDs. An exact already-published row can be treated as a retry. A repeated ID with different normalized fields is an error. Blank nullable fields never become zero. SQLite preserves the original decimal text. Observation DTOs use a JSON number or null. Retain CO₂ partial pressure in `mmHg` and derived concentration in `ppm` as related observations. Use partial pressure as the primary CO₂ signal. For any displayed conversion, label the assumed 760 mmHg cabin pressure and avoid counting both as independent evidence.
 
 ## Replay state
 
@@ -55,18 +55,22 @@ Serialize replay writes and check `expected_revision` within the write transacti
 
 | Method and path | Request and response |
 | --- | --- |
-| GET `/api/health` | `{status, database_ready, dataset_ready}`. In Stage 01, return `200` with `{"status":"ok","database_ready":true,"dataset_ready":false}` after a successful SQLite probe or `503` with `{"status":"unavailable","database_ready":false,"dataset_ready":false}` on failure. Stage 02 defines how to report dataset initialization failures. |
+| GET `/api/health` | `{status, database_ready, dataset_ready}`. Return `200` after a successful SQLite schema/readiness check. `dataset_ready` is true when a verified historical import and its replay state are committed. On SQLite failure return `503` with `{"status":"unavailable","database_ready":false,"dataset_ready":false}`. |
 | GET `/api/mission` | Mission snapshot `{revision, cursor_utc, mission_day, replay_status, synthetic, crew_summaries, cabin_readings, insights}`. Summaries use Crew and Observation DTOs. |
 | GET `/api/crew` | `{items: Crew[]}`, where Crew is `{crew_id, display_name, role}`. |
+| GET `/api/crew/{crew_id}` | One Crew profile, including `age_years` and `activity_pref`. |
 | GET `/api/observations` | Optional `crew_id`, `scope`, `metric`, `context`, `from_utc` and `to_utc`, plus `limit` (default 100, maximum 500) and `cursor`. Return `{revision, cursor_utc, items, next_cursor}`. This serves histories and the replay timeline. |
-| GET `/api/crew/{crew_id}/analysis` | Optional `metric`, `context`. Return `{revision, cursor_utc, baselines, findings}` for the selected crew member. |
+| GET `/api/observations/latest` | Same filters as history without `cursor` or `limit`. Require `crew_id` or `scope=cabin`. Return `{revision, cursor_utc, items, latest_missing, next_cursor: null}`. `items` contains the last valid reading per metric. `latest_missing` contains the newest observation per metric when it is missing. |
+| GET `/api/crew/{crew_id}/analysis` | Stage 04. Optional `metric`, `context`. Return `{revision, cursor_utc, baselines, findings}` for the selected crew member. |
 | GET `/api/replay` | Current `ReplayState`. The response contains only the published cursor and counts. |
-| POST `/api/replay` | `{command, expected_revision}` using the uppercase commands in the transition table, including `RESET`. Return the resulting `ReplayState`. |
-| GET `/api/data` | Sanitized provenance, metric definitions and reference metadata. |
+| POST `/api/replay` | Stage 03. `{command, expected_revision}` using the uppercase commands in the transition table, including `RESET`. Return the resulting `ReplayState`. |
+| GET `/api/data` | `dataset_id`, `version`, `mission_type`, `provenance`, `mission_start_utc`, `mission_days`, `historical_days`, `cabin_total_pressure_assumed_mmhg`, `initialized`, `imported_at_utc`, `historical_count`, `historical_missing_count`, `source_status`, `replay`, `metrics`, `references`. `source_status` is `VERIFIED`, `UNAVAILABLE`, or `INVALID` for the current startup check. Metrics include source dictionary fields and `scope`. References use the source catalog columns. |
+
+Stage 02 mission summaries include crew identities and latest valid cabin observations. `insights` is empty until analysis is implemented. Use `scope=cabin` for cabin history. Date ranges wholly after the cutoff return empty lists. Time filters require whole-second UTC.
 
 Observation responses use the normalized CSV fields except `note`. Sort history and timeline by `(timestamp_utc, observation_id)` ascending with a stable continuation token bound to filters and revision. Time filters are inclusive and the replay cutoff always takes precedence. Cabin feeds and mission summaries exclude private check-ins. Access to private check-in fields requires a person query with an explicit crew ID. A cross-crew insight may show an aggregate opted-in count and cabin observation IDs, without private text, individual scores, participant IDs or flags.
 
-Return a shared error envelope `{error: {code, message}}`, with `404` for unknown crew, `422` for invalid filters or commands, and `409` for conflicts. Read responses include a revision and cursor where relevant so clients can detect drift across requests. Treat changed pagination revisions as conflicts and restart paging from the same filter.
+Return a shared error envelope `{error: {code, message}}`, with `404` for unknown crew, `422` for invalid filters or commands, and `409` for conflicts. Read responses include a revision and cursor where relevant so clients can detect drift across requests. Treat changed pagination revisions as conflicts and restart paging from the same filter. Mission routes return `503 dataset_unavailable` before a successful bootstrap or `503 database_unavailable` when storage cannot be read. A failed source recheck leaves an earlier verified import available and surfaces the issue in `source_status`.
 
 ## Analysis
 

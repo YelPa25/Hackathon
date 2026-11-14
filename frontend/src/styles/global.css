@@ -145,3 +145,48 @@ h1 + p { margin-top: .65rem; }
 @media (prefers-reduced-motion: reduce) {
   .screen[data-enter], .nav a, .menu, .return-link { animation: none; transition: none; }
 }
+
+.mission-stack { display: grid; gap: 1rem; }
+.data-panel { min-width: 0; padding: clamp(1rem, 2.7vw, 1.5rem); }
+.data-panel h2 { margin-bottom: .75rem; }
+.mission-day { color: var(--color-cyan); font-size: 2rem; font-weight: 650; }
+.reading-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: .65rem; }
+.reading-tile {
+  display: grid;
+  align-content: start;
+  gap: .3rem;
+  padding: .8rem;
+  border: 1px solid var(--color-line);
+  border-radius: .55rem;
+  background: #0d1c2d;
+  overflow-wrap: anywhere;
+}
+.reading-tile dt { font-weight: 650; line-height: 1.35; }
+.reading-tile dd, .crew-link span { font-size: .85rem; color: var(--color-muted); }
+.reading-tile dd[data-tone="warn"] { color: #f5c892; }
+.reading-tile .reading-value { font-size: 1.3rem; font-weight: 650; color: var(--color-ink); }
+.reading-value, .reading-tile time, .observation-table time { font-variant-numeric: tabular-nums; }
+.reading-value small { font-size: .82rem; color: var(--color-muted); }
+.crew-link { min-height: 100%; }
+.crew-link:hover { border-color: var(--color-cyan); }
+.dataset-note, .profile-summary { margin-top: .75rem; }
+.data-label { display: grid; gap: .35rem; max-width: 21rem; font-weight: 600; }
+.data-label select, .data-control {
+  min-height: 44px;
+  padding: .45rem .7rem;
+  border: 1px solid var(--color-line);
+  border-radius: .45rem;
+  background: #0b1a2a;
+  color: var(--color-ink);
+}
+.data-control { margin-top: .55rem; cursor: pointer; color: var(--color-cyan); }
+.data-control:hover { border-color: var(--color-cyan); }
+.observation-scroll { overflow: auto; max-height: 24rem; margin-top: .55rem; }
+.observation-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.observation-table th, .observation-table td { padding: .6rem; text-align: left; border-bottom: 1px solid var(--color-line); }
+.observation-table th { position: sticky; top: 0; background: var(--color-panel); }
+.replay-facts { display: grid; gap: .4rem; margin: .8rem 0; }
+.replay-facts div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .4rem 1rem; border-top: 1px solid var(--color-line); padding-top: .5rem; }
+.replay-facts dt { color: var(--color-muted); }
+.reference-list { display: grid; gap: .75rem; }
+.reference-list a { color: var(--color-cyan); text-decoration: underline; text-underline-offset: .2em; }
