@@ -1,6 +1,6 @@
 # ASTRA 2.0
 
-ASTRA is a local, non-clinical astronaut health and mission replay prototype. A fresh mission opens at the end of Day 45 with four synthetic crew profiles. Stage 03 reveals recorded observations through Day 90 as mission time advances.
+ASTRA is a local, non-clinical astronaut health and mission replay prototype. A fresh mission opens at the end of Day 45 with four synthetic crew profiles. Stage 03 reveals recorded observations through Day 90 as mission time advances!
 
 ## Start on Windows
 
