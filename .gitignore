@@ -17,3 +17,12 @@ node_modules/
 dist/
 *.tsbuildinfo
 .taste-skill/
+
+# Local temporary files
+*.tmp
+*.temp
+*.swp
+*.log
+/tmp/
+Thumbs.db
+.DS_Store

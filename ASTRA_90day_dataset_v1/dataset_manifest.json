@@ -1,0 +1,71 @@
+{
+  "generator_version": "1.0.0",
+  "seed": 20261114,
+  "dataset_id": "ASTRA-SYN-90D-01",
+  "mission_type": "FICTIONAL_90_DAY_TRANSIT",
+  "days": 90,
+  "crew_count": 4,
+  "historical_days": 45,
+  "replay_days": 45,
+  "mission_start_utc": "2040-01-01T00:00:00Z",
+  "all_records_are_synthetic": true,
+  "no_real_astronaut_medical_records": true,
+  "sleep_nasa_reference": {
+    "mean_inflight_h": 7.33,
+    "sd_inflight_h": 1.16,
+    "comparison_only": true
+  },
+  "co2_reference": {
+    "cabin_one_hour_average_limit_mmhg": 3.0,
+    "note": "NASA OCHMO reference; not applied here as autonomous clinical severity rule"
+  },
+  "cabin_total_pressure_assumed_mmhg": 760.0,
+  "parameter_note": "Terrestrial pulse/BP profiles, day-to-day distributions and correlation coefficients are illustrative chosen model parameters, not fitted to raw NHANES or astronaut individual data. NASA sleep aggregate and CO2 guidance are external checks, not a validated simulation. CO2 is correlated with demo symptoms by construction, not causal proof.",
+  "replay_policy": {
+    "start_day": 45,
+    "historical_file": "replay_history_DAY01_to_DAY45.csv",
+    "hidden_future_file": "replay_future_HIDDEN_DAY46_to_DAY90.csv",
+    "rule": "Models and UI must only see observations at or before current simulated clock; evaluation event labels NEVER supplied to live app"
+  },
+  "observation_quality_values": [
+    "VALID",
+    "MISSING"
+  ],
+  "provenance_values": [
+    "SYNTHETIC"
+  ],
+  "references": [
+    {
+      "source_id": "NASA-SLEEP",
+      "organization": "NASA/NTRS",
+      "title": "Astronaut Sleep Duration Varies by Timing of Scheduled Sleep",
+      "url": "https://ntrs.nasa.gov/citations/20230003916",
+      "use": "Published in-flight mean 7.33h, SD 1.16h for sample (n=19; 2137 nights), only a population-level check",
+      "direct_raw_data_fitted": "No"
+    },
+    {
+      "source_id": "NASA-CO2",
+      "organization": "NASA OCHMO",
+      "title": "OCHMO-TB-004 Carbon Dioxide",
+      "url": "https://www.nasa.gov/ochmo-tb-004-carbon-dioxide-2/",
+      "use": "NASA-reported cabin CO2 monitoring framework, exposure standards and uncertainty of headache association; no probability fit",
+      "direct_raw_data_fitted": "No"
+    },
+    {
+      "source_id": "NASA-STDM",
+      "organization": "NASA HRP",
+      "title": "Spaceflight Standard Measures",
+      "url": "https://www.nasa.gov/directorates/smd/space-life-physical-sciences-research-applications-division/human-research-program/spaceflight-standard-measures-characterizing-how-humans-adapt-in-space/",
+      "use": "Instrument, check-in and observation-category selection; not numeric distributions",
+      "direct_raw_data_fitted": "No"
+    },
+    {
+      "source_id": "CDC-NHANES",
+      "organization": "CDC/NCHS",
+      "title": "NHANES 2017-2018 BPX_J blood pressure and pulse metadata",
+      "url": "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2017/DataFiles/BPX_J.htm",
+      "use": "Terrestrial measurement definitions/protocol and observed ranges; public XPT rows were not downloaded and model not statistically fit to NHANES",
+      "direct_raw_data_fitted": "No"
+    }
+  ]
+}

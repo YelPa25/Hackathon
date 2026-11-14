@@ -1,0 +1,5 @@
+crew_id,display_name,role,age_years,rest_hr_ref_bpm,sys_ref_mmhg,dia_ref_mmhg,sleep_tendency_h,activity_pref,baseline_stress
+AST-001,Daniel Okafor,Flight Engineer,37,63,115,74,7.22,resistance,1.1
+AST-002,Samir Rahman,Science Specialist,35,68,119,77,7.34,mixed,1.22
+AST-003,Hana Tanaka,Crew Medical Officer,42,57,111,71,7.44,endurance,1.0
+AST-004,Maya Vega,Commander,44,61,117,75,7.4,mixed,1.13

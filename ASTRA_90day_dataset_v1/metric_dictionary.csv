@@ -1,0 +1,19 @@
+metric,unit,description,provenance,measurement_cadence,is_nasa_measured
+resting_heart_rate,bpm,Morning wearable resting estimate,SYNTHETIC,intermittent_or_daily,NO
+exercise_heart_rate,bpm,"Recorded during planned exercise, not comparable to resting",SYNTHETIC,intermittent_or_daily,NO
+recovery_heart_rate,bpm,Approximate HR measured 20 minutes after exercise,SYNTHETIC,intermittent_or_daily,NO
+sleep_duration,h,Nightly wearable/self-report composite,SYNTHETIC,intermittent_or_daily,NO
+sleep_quality,score_0_4,Voluntary perceived sleep quality; 4 best,SYNTHETIC,intermittent_or_daily,NO
+fatigue,score_0_4,Voluntary fatigue rating; 4 most fatigued,SYNTHETIC,intermittent_or_daily,NO
+mood,score_0_4,Voluntary mood; 4 most positive,SYNTHETIC,intermittent_or_daily,NO
+perceived_stress,score_0_4,Voluntary stress; 4 highest,SYNTHETIC,intermittent_or_daily,NO
+headache,score_0_4,Voluntary headache; 0 means no symptom reported,SYNTHETIC,intermittent_or_daily,NO
+systolic_bp,mmHg,Intermittent cuff measurement,SYNTHETIC,intermittent_or_daily,NO
+diastolic_bp,mmHg,Intermittent cuff measurement paired with systolic,SYNTHETIC,intermittent_or_daily,NO
+body_temperature,degC,Intermittent thermometer reading,SYNTHETIC,intermittent_or_daily,NO
+spo2,percent,Intermittent finger pulse oximeter reading,SYNTHETIC,intermittent_or_daily,NO
+exercise_duration,min,Voluntary exercise session duration,SYNTHETIC,intermittent_or_daily,NO
+cabin_co2_partial_pressure,mmHg,"CO2 partial pressure, primary cabin CO2 value",SYNTHETIC,hourly,NO
+cabin_co2_concentration,ppm,Derived from assumed constant 760 mmHg total pressure,SYNTHETIC,hourly,NO
+cabin_temperature,degC,Cabin temperature,SYNTHETIC,hourly,NO
+cabin_relative_humidity,percent,Cabin relative humidity,SYNTHETIC,hourly,NO

@@ -49,6 +49,8 @@ The root `.env.example` lists settings. Set backend variables with `$env:NAME = 
 - `ASTRA_DEV_API_TARGET` is Vite's backend proxy target. `ASTRA_DEV_FRONTEND_PORT` changes Vite's port.
 - `ASTRA_DATASET_DIR` points to the extracted read-only bundle. The backend prefers `data-source/ASTRA_90day_dataset_v1` when present and otherwise uses `ASTRA_90day_dataset_v1` at the project root. The latter is the current layout. Override it with `$env:ASTRA_DATASET_DIR = 'C:\path\to\ASTRA_90day_dataset_v1'`. Use the original inputs and `SHA256SUMS.txt`.
 
+This repository includes the six runtime dataset inputs and their original SHA256SUMS.txt. The checksum list also covers files from the full source bundle. The historical importer and replay engine verify the entries for the inputs they read.
+
 ## Checks
 
 From `backend`, run `uv run --locked --offline --python $astraPython --no-managed-python pytest -q` with the original bundle in one of the default locations. From `frontend`, run `npm.cmd run lint`, `npm.cmd run typecheck` and `npm.cmd run build`. Stop Vite before reinstalling dependencies on Windows so it releases native package files.

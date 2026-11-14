@@ -1,0 +1,5 @@
+source_id,organization,title,url,use,direct_raw_data_fitted
+NASA-SLEEP,NASA/NTRS,Astronaut Sleep Duration Varies by Timing of Scheduled Sleep,https://ntrs.nasa.gov/citations/20230003916,"Published in-flight mean 7.33h, SD 1.16h for sample (n=19; 2137 nights), only a population-level check",No
+NASA-CO2,NASA OCHMO,OCHMO-TB-004 Carbon Dioxide,https://www.nasa.gov/ochmo-tb-004-carbon-dioxide-2/,"NASA-reported cabin CO2 monitoring framework, exposure standards and uncertainty of headache association; no probability fit",No
+NASA-STDM,NASA HRP,Spaceflight Standard Measures,https://www.nasa.gov/directorates/smd/space-life-physical-sciences-research-applications-division/human-research-program/spaceflight-standard-measures-characterizing-how-humans-adapt-in-space/,"Instrument, check-in and observation-category selection; not numeric distributions",No
+CDC-NHANES,CDC/NCHS,NHANES 2017-2018 BPX_J blood pressure and pulse metadata,https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2017/DataFiles/BPX_J.htm,Terrestrial measurement definitions/protocol and observed ranges; public XPT rows were not downloaded and model not statistically fit to NHANES,No
