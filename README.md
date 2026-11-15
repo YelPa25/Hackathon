@@ -1,83 +1,151 @@
 # ASTRA 2.0
 
-ASTRA is a local, non-clinical astronaut health and mission replay prototype. A fresh mission opens at the end of Day 45 with four synthetic crew profiles. Stage 03 reveals recorded observations through Day 90 as mission time advances!
+**Autonomous Astronaut Health Intelligence**
+
+Offline mission replay and explainable personal health monitoring for a simulated four-person spacecraft crew.
+
+![ASTRA Mission Overview at the end of the historical period](docs/screenshots/mission-overview.jpg)
+
+**Apache-2.0** · **Python 3.12** · **React + TypeScript** · **Offline Core** · **Synthetic mission data**
+
+Long-duration missions bring communication delays, limited medical support, physiological adaptation, and a shared cabin environment. ASTRA explores what a crew could learn from its own readings and history using local computing. It is a research and engineering prototype for exploration and demonstration. It has no clinical validation or flight qualification.
+
+| Screen | What you can do |
+| --- | --- |
+| **Mission Overview** | See the published mission time, four crew profiles, personal monitoring summaries, and cabin findings with evidence and uncertainty. |
+| **Crew Health** | Compare a crew member’s readings with their own reference, inspect trends and supporting observations, and filter the charts by metric and range. |
+| **Mission Replay** | Begin at the end of Day 45. Reveal the original recorded observations by timestamp or day, adjust playback speed, and reset to the historical cutoff. |
+| **Data & Science** | Explore dataset provenance, NASA’s five spaceflight hazards, the statistical method, a hypothetical baseline comparison, and recorded verification. |
+| **Research Prototypes** | Play synthetic facial and acoustic feature examples with no hardware. Optional Windows capture uses individual calibration and displays experimental feature deviations. |
+| **ASTRA Companion** | Chat, play a text game, or ask for a quiz using an optional local Qwen model. The recreational assistant receives only the supplied conversation and has no access to health or mission records. |
+
+More screenshots from the application on the same synthetic Day 45 mission: [Crew Health](docs/screenshots/crew-health.jpg), [Mission Replay](docs/screenshots/mission-replay.jpg), [Data & Science](docs/screenshots/data-and-science.jpg), [Research Prototypes](docs/screenshots/research-prototypes.jpg), and [ASTRA Companion](docs/screenshots/astra-companion.jpg). The captures contain synthetic mission information. Camera, microphone, and conversation content were excluded.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    UI["React console"] -->|"Loopback HTTP via Vite"| API["FastAPI Core"]
+    Data["Synthetic CSV partitions"] --> Replay["Historical import and chronological replay"]
+    Replay --> DB[("SQLite: published rows and cutoff")]
+    DB --> Engine["Deterministic personal references and findings"]
+    API --> Replay
+    API --> DB
+    API --> Engine
+    API --> Chat["Independent recreational chat endpoint"]
+    Chat -. "Optional loopback" .-> Qwen["Ollama / Qwen"]
+    UI -. "Optional opt-in capture" .-> Research["Research broker and isolated Windows worker"]
+```
+
+The backend owns the replay clock. It publishes exact source records in transactions and gates every observation query by the current UTC cutoff. Research sample results can appear beside Core findings as experimental cards. They do not set Core monitoring states. See [architecture](docs/ARCHITECTURE.md) and [API contracts](docs/CONTRACTS.md).
+
+The Core stack is React 19, TypeScript 5.9, Vite, Tailwind CSS and Recharts on the frontend, with Python 3.12, FastAPI, Pydantic, and the Python standard-library SQLite driver on the backend. [Python lockfile](backend/uv.lock) · [npm lockfile](frontend/package-lock.json).
+
+## Scientific method
+
+ASTRA builds a fixed personal reference for each supported metric and context from Days 1–45. It uses daily medians and median absolute deviation, with metric-specific variability floors. Continuous comparisons use a modified Z-score where supported. Ordered self-reports use changes in reported categories. The engine checks recent direction, persistence, freshness and coverage. Context rules can bring together physiological, sleep, self-report, or cabin observations in defined time windows. A finding shows its evidence and a way to verify a reading. The configured thresholds describe unusual observations in this prototype. See the [health intelligence methodology](docs/HEALTH_INTELLIGENCE_METHODOLOGY.md).
+
+## Dataset
+
+**ASTRA-SYN-90D-01 v1.0.0** covers 90 fictional mission days, four fictional crew members and 18 metrics across activity, physiology, sleep, self-reports and cabin telemetry. The 12,491 original observations comprise 6,252 historical and 6,239 replay rows. Source quality flags identify 67 explicit missing observations across the complete bundle.
+
+NASA Spaceflight Standard Measures informed the observation categories. A published astronaut sleep aggregate informed simulation checks. NASA’s cabin CO₂ brief and CDC/NHANES metadata supplied monitoring and measurement context. No individual astronaut records or individual NHANES data are included. The generator uses an explicit seed and illustrative distributions. The two source partitions remain visible to readers of the source tree, while the running application reveals records through its published replay cutoff. [Dataset guide](docs/DATASET.md) · [manifest](ASTRA_90day_dataset_v1/dataset_manifest.json) · [validation](ASTRA_90day_dataset_v1/validation_report.json) · [scientific sources](ASTRA_90day_dataset_v1/scientific_sources.csv).
 
 ## Start on Windows
 
-Use installed Windows Python 3.12, uv and Node.js 22.13+ (Node 22 LTS) or Node 24 or newer with npm. If Python 3.12 is installed elsewhere, set `$astraPython` to its full executable path. Initial dependency installation needs package registry access. Subsequent starts use installed dependencies and loopback.
-
-### Backend terminal
+Install [Git](https://git-scm.com/download/win), system-installed [Python 3.12](https://www.python.org/downloads/windows/), [uv](https://docs.astral.sh/uv/getting-started/installation/), and [Node.js](https://nodejs.org/en/download) 22.13+ in the 22.x line or Node.js 24+. The tested path uses Windows PowerShell and a local browser. The first installation needs registry access. Core runs over loopback after installation.
 
 ```powershell
-Set-Location './backend'
+git clone https://github.com/YelPa25/ASTRA-2.0.git
+Set-Location .\ASTRA-2.0
+```
+
+Use the current private clone URL during release review. From the cloned root, open two PowerShell terminals.
+
+**Terminal 1 · backend on port 8050**
+
+```powershell
+Set-Location .\backend
 $astraPython = Join-Path $env:LOCALAPPDATA 'Programs\Python\Python312\python.exe'
 uv sync --locked --python $astraPython --no-managed-python
 uv run --locked --offline --python $astraPython --no-managed-python uvicorn --factory astra.main:create_app --app-dir src --host 127.0.0.1 --port 8050
 ```
 
-FastAPI creates or upgrades `backend/var/astra.sqlite3` and verifies and imports history automatically before accepting requests. First import logs "Historical mission dataset: imported". Restarting with the same inputs logs "already present" and reuses the import. Open [backend health](http://127.0.0.1:8050/api/health) to confirm `{"status":"ok","database_ready":true,"dataset_ready":true}`. If history is unavailable, check the startup log. If a source check fails after a successful import, the prior verified import stays available and Data & Science displays the issue.
+If Python is installed elsewhere, set `$astraPython` to the full path of your installed Python 3.12 executable. FastAPI verifies the tracked runtime inputs and initializes backend/var/astra.sqlite3 on first start. A new database opens at the end of Day 45. Later starts reuse the database. No environment file is needed with the default paths and ports. [Configuration template](.env.example) · [Backend health](http://127.0.0.1:8050/api/health).
 
-### Frontend terminal
+**Terminal 2 · frontend on port 5180**
 
 ```powershell
-Set-Location './frontend'
+Set-Location .\frontend
 npm.cmd ci
 npm.cmd run dev
 ```
 
-Open the [ASTRA console](http://127.0.0.1:5180/). Mission Overview shows four crew members and cabin readings. Crew Health shows crew profiles, latest readings and historical samples. Mission Replay opens at the saved position. A fresh database starts at Day 45, and a backend restart pauses active playback. [Data & Science](http://127.0.0.1:5180/data-and-science) shows synthetic provenance, the live replay cutoff, the statistical method, and the scientific sources. Try **Personalization** to compare one hypothetical resting heart rate against two fixed Days 1–45 references.
+Open [ASTRA](http://127.0.0.1:5180/). Finish with Ctrl+C in each terminal.
 
-Press Ctrl+C in each terminal to stop its process. If verifying recovery, restart FastAPI and select **Retry** on any view that failed while it was down. This checkout uses ports 8050 and 5180.
+1. Open **Crew Health** from Mission Overview and compare a measured reading with its personal reference.
+2. Open **Mission Replay** and select **Next Day**. Return to the dashboard to see the new cutoff and readings. **Reset Replay** restores the Day 45 starting point.
+3. Open **Data & Science** and move the hypothetical heart-rate slider to see how the same value compares with two personal baselines.
+4. Play a synthetic **Research Prototypes** sample or start **ASTRA Companion** if the optional services are available.
 
-## Verify replay
+### Optional Companion and research capture
 
-1. Open [ASTRA](http://127.0.0.1:5180/) and select **Mission Replay**. A fresh database opens on Day 45.
-2. Open **Crew Health** and note the latest date on a chart. Return to Mission Replay and select **Next Day**. Day 46 publishes 141 records. Return to Crew Health and look for a new sample, for example Hana Tanaka's sleep duration on 15 February.
-3. Step through several days, choose a speed, then use **Resume**, **Pause**, and **Resume** again. **Next Event** while paused publishes one complete timestamp group.
-4. Restart the backend with the same database path and verify the saved position. Select **Reset Replay** and confirm. Check that Mission Overview and Crew Health return to the Day 45 view.
-5. To rehearse in isolation, set `ASTRA_DB_PATH` to a new temporary SQLite path before starting the backend. Restore the previous environment setting when finished.
-
-Playback runs on the backend even when you leave the replay page. Use one backend process per database. Reset preserves installed history, source files, unrelated database records, and playback speed.
-
-## Configuration
-
-The root `.env.example` lists settings. Set backend variables with `$env:NAME = 'value'` before starting FastAPI. Vite settings can be set in the frontend terminal or in a root `.env.local`.
-
-- `ASTRA_ENV` is `development` or `test`. Only development enables CORS.
-- `ASTRA_DB_PATH` is a SQLite file path. Relative paths resolve from `backend`. Keep it outside the source directory.
-- `ASTRA_CORS_ORIGINS` is a comma-separated list of loopback frontend origins with explicit ports.
-- `ASTRA_DEV_API_TARGET` is Vite's backend proxy target. `ASTRA_DEV_FRONTEND_PORT` changes Vite's port.
-- `ASTRA_DATASET_DIR` points to the extracted read-only bundle. The backend prefers `data-source/ASTRA_90day_dataset_v1` when present and otherwise uses `ASTRA_90day_dataset_v1` at the project root. The latter is the current layout. Override it with `$env:ASTRA_DATASET_DIR = 'C:\path\to\ASTRA_90day_dataset_v1'`. Use the original inputs and `SHA256SUMS.txt`.
-
-This repository includes the six runtime dataset inputs and their original SHA256SUMS.txt. The checksum list also covers files from the full source bundle. The historical importer and replay engine verify the entries for the inputs they read.
-
-## Checks
-
-From `backend`, run `uv run --locked --offline --python $astraPython --no-managed-python pytest -q` with the original bundle in one of the default locations. From `frontend`, run `npm.cmd run lint`, `npm.cmd run typecheck` and `npm.cmd run build`. Stop Vite before reinstalling dependencies on Windows so it releases native package files.
-
-## AI-assisted development
-
-The ASTRA team set the requirements, chose the methods, reviewed the work and made the final engineering decisions. OpenAI ChatGPT supported research exploration, planning and review. OpenAI Codex helped implement, test and document the application. Neither tool, an OpenAI API key, nor cloud inference is required to run the native analysis. The optional local Qwen model is a separate runtime for recreational Companion chat.
-
-### Optional ASTRA Companion
-
-Open [ASTRA Companion](http://127.0.0.1:5180/companion) for conversation, stories, quizzes and text games. It uses the existing Ollama runtime on `http://127.0.0.1:11434` with the exact model `qwen3:4b-instruct-2507-q4_K_M`. Neither the mission console nor its health features needs Ollama.
-
-In PowerShell, run `ollama list` and check for that exact tag. If Ollama is already running, the Companion screen can verify it. For a manual local-only Ollama session, quit Ollama from the Windows taskbar first if its tray app already owns the port, then run:
+Install [Ollama for Windows](https://ollama.com/download/windows) and pull the exact local model:
 
 ```powershell
-$env:OLLAMA_NO_CLOUD = '1'
-ollama serve
+ollama pull qwen3:4b-instruct-2507-q4_K_M
+ollama list
 ```
 
-Open Companion and wait for **Qwen3 · Running locally**. Pick a starter or type a message, then press Enter. Shift+Enter adds a line. The first reply may take a few seconds while Ollama loads the model. If the service becomes unavailable, keep the tab open, restart Ollama and use **Check again** and **Retry**. For an existing ASTRA backend started without reload, restart FastAPI from this checkout once to load the Companion routes.
+Start Ollama and open Companion. On a Windows manual start, exit the Ollama tray application first if it owns port 11434, then set `$env:OLLAMA_NO_CLOUD = '1'` and run `ollama serve`. Verified with Ollama 0.40.16 on an RTX 5090 Laptop GPU. The model download is about 2.5 GB. GPU acceleration is optional for Ollama. Performance depends on available memory and hardware. [Model and license details](THIRD_PARTY_NOTICES.md#optional-local-runtimes-and-models).
 
-The chat transcript stays in browser memory as you navigate within ASTRA. **New Conversation** clears it. Reloading the app or closing the tab ends the session. Ollama receives only the recreational prompt and a bounded set of chat messages over loopback. The chat is for recreation. Use ASTRA's dedicated screens for health and mission information. [Ollama local-only setup](https://docs.ollama.com/faq#how-do-i-disable-ollamas-cloud-features)
+Synthetic face and speech examples work after Core setup. The [Windows capture guide](docs/LIVE_RESEARCH_CAPTURE.md) covers the separate Python 3.11 CPU environment, model files, broker on port 8051, and camera and microphone permissions. Live capture requires separately obtained research dependencies and approved weights. Model files and private device data are excluded. See the [licensing and availability notes](THIRD_PARTY_NOTICES.md#optional-local-runtimes-and-models) before setting up capture.
 
-### Optional live research capture
+## Project map
 
-Open [Research Prototypes](http://127.0.0.1:5180/research-prototypes) to try the synthetic samples. For local webcam and microphone inference, follow [Windows research setup and startup](docs/LIVE_RESEARCH_CAPTURE.md).
+| Path | Contents |
+| --- | --- |
+| [backend/src/astra](backend/src/astra) | API, SQLite, replay and observation queries. |
+| [health_engine.py](backend/src/astra/health_engine.py) and [health_statistics.py](backend/src/astra/health_statistics.py) | Deterministic baselines and native monitoring. |
+| [companion.py](backend/src/astra/companion.py) | Local Ollama interface, separate from mission data. |
+| [frontend/src](frontend/src) | Six views, charts, interactions, and local visual assets. |
+| [face_speech](face_speech) | Experimental feature extractors, detector, optional broker and tests. |
+| [ASTRA_90day_dataset_v1](ASTRA_90day_dataset_v1) | Source runtime partitions, metadata, generator, validation and checksums. |
+| [backend/tests](backend/tests) and [docs](docs) | Regression tests, methodology, and reproducibility notes. |
 
-## Visual credit
+## Verification
 
-Backdrop: [Blue Marble, 2012](https://www.nasa.gov/image-article/blue-marble-2012/), NASA/NOAA/GSFC/Suomi NPP/VIIRS/Norman Kuring. ASTRA bundles a resized JPEG and applies the dark treatment in CSS. See [NASA's media use guidelines](https://www.nasa.gov/nasa-brand-center/images-and-media/). Use of this imagery does not imply endorsement.
+From `backend`, after `uv sync` in the quick start:
+
+```powershell
+uv lock --check --offline --python $astraPython --no-managed-python
+uv run --locked --offline --python $astraPython --no-managed-python pytest -q
+uv run --locked --offline --python $astraPython --no-managed-python pytest -q tests/test_intelligence.py tests/test_intelligence_replay.py tests/test_science.py
+uv run --locked --offline --python $astraPython --no-managed-python pytest -q tests/test_companion.py
+```
+
+From `frontend`, after `npm.cmd ci`:
+
+```powershell
+npm.cmd run lint
+npm.cmd run typecheck
+npm.cmd run build
+```
+
+Run the [research prototype tests](docs/FACE_SPEECH_RESEARCH.md#scope-and-startup) with the documented separate environment. The [verification report](docs/RELEASE_VERIFICATION.md) records what ran and distinguishes software and synthetic replay checks from device and model testing. The [Stage 04 evaluation](docs/STAGE_04_VERIFICATION.md) describes the full synthetic replay analysis. These checks do not establish clinical sensitivity or specificity.
+
+## AI-assisted engineering
+
+OpenAI ChatGPT supported concept development, scientific exploration, architecture and implementation planning, troubleshooting, critical review, documentation and design concepts. OpenAI Codex helped build and integrate the backend, frontend and statistical engine, debug and refactor software, add tests, manage Git, and prepare project documentation. The team set requirements, reviewed the work, and made the engineering decisions. Neither development tool nor the OpenAI API is a runtime dependency. Qwen is a separate optional model for local recreational chat.
+
+## Scientific limits
+
+ASTRA uses fictional crew and simulated measurements. Coverage varies by metric and time. The project-defined statistical thresholds have no clinical validation, the dataset contains no direct radiation measurements, and cabin associations do not establish causation. Facial and acoustic features are experimental and do not establish emotion, stress, or illness. ASTRA has no flight qualification or individual authentication. Use synthetic inputs for the demonstration and treat locally saved research calibration as private.
+
+## Contributors and NASA Space Apps
+
+Developed by the ASTRA team for the [2026 NASA Space Apps Challenge](https://www.spaceappschallenge.org/2026/), held November 14–15, 2026. The Git history and [research handoff notes](docs/FACE_SPEECH_RESEARCH.md) preserve contributor attribution. The project is an independent team submission.
+
+## License and credits
+
+Original team contributions are licensed under [Apache License 2.0](LICENSE). Upstream packages, models, and the Earth image retain their own terms. The backdrop is NASA’s [Blue Marble, 2012](https://www.nasa.gov/image-article/blue-marble-2012/), credited to NASA/NOAA/GSFC/Suomi NPP/VIIRS/Norman Kuring. See [third-party notices](THIRD_PARTY_NOTICES.md) for source links and restrictions.

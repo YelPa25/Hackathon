@@ -1,0 +1,55 @@
+{
+  "record_total": 12491,
+  "health_records": 3851,
+  "environment_records": 8640,
+  "history_records": 6252,
+  "future_replay_records": 6239,
+  "crew_daily_summary_rows": 360,
+  "mission_days": 90,
+  "crew_count": 4,
+  "quality_counts": {
+    "VALID": 12424,
+    "MISSING": 67
+  },
+  "metric_counts": {
+    "body_temperature": 120,
+    "cabin_co2_concentration": 2160,
+    "cabin_co2_partial_pressure": 2160,
+    "cabin_relative_humidity": 2160,
+    "cabin_temperature": 2160,
+    "diastolic_bp": 117,
+    "exercise_duration": 295,
+    "exercise_heart_rate": 295,
+    "fatigue": 360,
+    "headache": 360,
+    "mood": 360,
+    "perceived_stress": 360,
+    "recovery_heart_rate": 295,
+    "resting_heart_rate": 360,
+    "sleep_duration": 360,
+    "sleep_quality": 360,
+    "spo2": 92,
+    "systolic_bp": 117
+  },
+  "sleep_mean_h": 7.35,
+  "sleep_sd_h": 1.14,
+  "co2_max_mmhg": 3.95,
+  "co2_max_ppm_at_assumed_pressure": 5197,
+  "qa_checks_passed": [
+    "unique_observation_ids",
+    "consistent_90_day_split",
+    "no_future_records_in_history",
+    "missing_values_are_blank",
+    "valid_blood_pressure_pairs",
+    "exact_four_crew",
+    "exact_360_daily_summary_rows"
+  ],
+  "limitations": [
+    "Not directly fit to NHANES public microdata; published CDC metadata only",
+    "No actual astronaut records included",
+    "Symptoms and CO2 test event co-occur by design; no causal evidence",
+    "Synthetic data cannot prove clinical accuracy",
+    "Future records included separately and must be kept hidden until replay",
+    "No validated population risk rates or diagnostic labels"
+  ]
+}

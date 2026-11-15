@@ -103,7 +103,7 @@ The full replay test starts at Day 45 (6,252 observations), reads the mission pl
 Timings are from local FastAPI TestClient requests in one test run, including SQLite reads, analysis and JSON serialization. They are not browser render times. Native analysis runs synchronously outside the replay event loop in FastAPI's normal threadpool; no application-wide cache or analysis write is used.
 
 - Backend regression and analytical tests: `uv run --locked --offline --python $astraPython --no-managed-python pytest -q -s`, **43 passed**. The existing 21-test suite is included; one assertion that the planned analysis route did not exist was retired. The evaluation test prints its counters and per-day findings.
-- Unchanged research prototype tests: from project root set `$env:PYTHONPATH = (Resolve-Path 'face_speech').Path`, then run `& '%LOCALAPPDATA%/ASTRAResearch/.venv/Scripts/python.exe' -m pytest face_speech/tests -q`, **49 passed** in the separate installed environment.
+- Unchanged research prototype tests: from project root set `$env:PYTHONPATH = (Resolve-Path 'face_speech').Path`, then run `& (Join-Path $env:LOCALAPPDATA 'ASTRAResearch/.venv/Scripts/python.exe') -m pytest face_speech/tests -q`, **49 passed** in the separate installed environment.
 - In `frontend`: `npm.cmd run lint`, `npm.cmd run typecheck` and `npm.cmd run build` all passed.
 - SHA-256: all 16 entries in the original source bundle checksum list matched before and after verification. None of the source files, replay tables, or Research Prototypes implementations was edited.
 
@@ -118,7 +118,7 @@ Both synthetic face and voice walkthroughs produced visible results with the opt
 Keep your current mission if you prefer. To start from Day 45 without altering it, stop the current backend and launch it with a temporary test database. If the existing Vite frontend is already running, leave it open.
 
 ```powershell
-Set-Location './backend'
+Set-Location .\backend
 $astraPython = Join-Path $env:LOCALAPPDATA 'Programs/Python/Python312/python.exe'
 $env:ASTRA_DB_PATH = Join-Path $env:TEMP ('astra-stage04-review-' + [guid]::NewGuid() + '.sqlite3')
 uv run --locked --offline --python $astraPython --no-managed-python uvicorn --factory astra.main:create_app --app-dir src --host 127.0.0.1 --port 8050

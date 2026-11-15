@@ -2,7 +2,7 @@
 
 For the subsequent opt-in Windows capture implementation, see [Live research capture](LIVE_RESEARCH_CAPTURE.md). The results below document the initial fixture phase.
 
-Local branch: `codex/face-speech-research`, based on `main` at `03d3be4`. Upstream: [face and speech handoff at dc30f16](https://github.com/YelPa25/Hackathon/tree/dc30f16775cefe34777dcbf85d949d545ea1bf62/face_speech).
+Local branch: `codex/face-speech-research`, based on `main` at `03d3be4`. The original face and speech handoff was reviewed at commit dc30f16. This repository preserves the imported source and the reproducible synthetic fixture.
 
 ## Scope and startup
 

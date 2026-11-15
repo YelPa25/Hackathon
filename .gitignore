@@ -26,3 +26,53 @@ dist/
 /tmp/
 Thumbs.db
 .DS_Store
+
+# Local environments, caches, IDE settings and diagnostics
+/venv/
+.cache/
+.mypy_cache/
+.coverage
+coverage/
+.vscode/
+.idea/
+release-smoke/
+
+# Model caches, saved research state and raw device captures
+*.bin
+*.pkl
+*.npy
+*.pt
+*.pth
+*.safetensors
+*.onnx
+*.gguf
+*.npz
+*.jsonl
+*.wav
+*.flac
+*.mp3
+*.m4a
+*.mp4
+*.mov
+*.avi
+*.webm
+/calibration-records/
+/conversations/
+
+# Keep the immutable runtime partitions and selected methodology files
+/ASTRA_90day_dataset_v1.zip
+/ASTRA_90day_dataset_v1/ASTRA_90day_dataset_OVERVIEW.xlsx
+/ASTRA_90day_dataset_v1/CODEX_IMPORT_NOTES.md
+/ASTRA_90day_dataset_v1/EVALUATION_ONLY_scenario_truth_NOT_FOR_LIVE_APP.csv
+/ASTRA_90day_dataset_v1/README.md
+/ASTRA_90day_dataset_v1/all_observations_FULL_ARCHIVE.csv
+/ASTRA_90day_dataset_v1/cabin_environment_observations.csv
+/ASTRA_90day_dataset_v1/crew_daily_summary_FOR_REVIEW.csv
+/ASTRA_90day_dataset_v1/health_observations.csv
+
+# Local credentials and backups
+.npmrc
+*.pem
+*.key
+credentials.json
+*.bak

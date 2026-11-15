@@ -24,6 +24,8 @@ If a device prompt was denied, enable it in browser site settings and check Wind
 
 ## Runtime and weights
 
+This setup is optional and intended for local research use under the upstream terms. Read the [third-party notices](../THIRD_PARTY_NOTICES.md#optional-local-runtimes-and-models) before installing LibreFace or openSMILE. For the competition demonstration, the synthetic feature samples work with the normal Core setup and require no live capture packages or device access.
+
 This installation uses system Python 3.11.9, a separate environment at `%LOCALAPPDATA%\ASTRAResearch\.venv`, and the Windows CPU builds of PyTorch 2.0.1, TorchVision 0.15.2 and TorchAudio 2.0.2. The original teammate manifest remains intact. `requirements-windows.txt` contains the compatible research dependencies, including PyArrow 17.0.0. Newer PyArrow was blocked by Windows application control. LibreFace uses the AU submodules directly, with the same AU checkpoint as the teammate branch. Gaze and expression classification are outside the live configuration.
 
 On a fresh Windows machine, install the official Python 3.11 interpreter and create an optional environment:
@@ -43,7 +45,7 @@ Copy these pinned files under `%LOCALAPPDATA%\ASTRAResearch\models`. The worker 
 
 | Relative model path | Source |
 | --- | --- |
-| `libreface/AU_Recognition/weights/combined_resnet.pt` | [Teammate's branch at dc30f16](https://github.com/YelPa25/Hackathon/blob/dc30f16775cefe34777dcbf85d949d545ea1bf62/face_speech/weights_libreface/AU_Recognition/weights/combined_resnet.pt), Git blob `d6388c0946bb12c10e2ca7fd4ef48de97144faa2`. Private repository access required. |
+| `libreface/AU_Recognition/weights/combined_resnet.pt` | [LibreFace 0.2.0 upstream checkpoint](https://drive.google.com/file/d/1CbnBr8OBt8Wb73sL1ENcrtrWAFWSSRv0/view), as linked by the installed package. See [USC terms](https://github.com/ihp-lab/LibreFace/blob/main/LICENSE.rst). The worker accepts only SHA-256 `d7d11d9f029afef0d36306f91f5e67fd20531390864ab014e08683dbaca3954b`. The 45.3 MB upstream download matched the worker pin during the release rehearsal. |
 | `torch/hub/checkpoints/resnet18-f37072fd.pth` | [Official TorchVision CPU checkpoint](https://download.pytorch.org/models/resnet18-f37072fd.pth). |
 | `silero/silero_vad.jit`, `silero/utils_vad.py` | [Pinned Silero release source](https://github.com/snakers4/silero-vad/tree/6478567951ae5c9979ad7b234185b5515f4be7a1/src/silero_vad). The JIT file is in its `data` directory. |
 | `xls-r/config.json`, `xls-r/pytorch_model.bin` | [Pinned Meta XLS-R weights](https://huggingface.co/facebook/wav2vec2-xls-r-300m/tree/1a640f32ac3e39899438a2931f9924c02f080a54), about 1.27 GB. |

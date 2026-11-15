@@ -18,7 +18,7 @@ Implemented the local application foundation in ASTRA-Hackathon. The backend has
 
 - Frontend: [ASTRA console](http://127.0.0.1:5180/).
 - Backend: [FastAPI health](http://127.0.0.1:8050/api/health).
-- SQLite: `./backend\var\astra.sqlite3`.
+- SQLite: `backend/var/astra.sqlite3`.
 - Defaults use 8050 and 5180 because this machine already had listeners on 8000 and 5173. The package installs use Node v26.13.1, npm 11.20.0, uv 0.12.10 and installed Python 3.12.10.
 
 | Check | Result |
@@ -114,7 +114,7 @@ Added an optional recreational chat page and a separate FastAPI router for the e
 - **Offline and outage PASS.** The browser completed real multi-turn chat against an isolated instance of the installed runtime with cloud disabled, external HTTP proxies directed to an unavailable loopback port, and the test backend restricted to loopback. The Windows network adapter stayed enabled. Stopping the isolated Ollama listener showed the unavailable state and preserved the transcript and draft. Core mission and analysis responses and both Research Prototypes panels still worked. The main Ollama listener was unaffected.
 - **Browser PASS.** Checked starters, Enter and Shift+Enter, the visible generation state, a simulated timeout followed by successful real retry, Copy, navigation with the transcript retained, New Conversation, and 390-pixel layout. The chat returns whole replies. Physical camera and microphone capture were outside this check.
 - **Automated PASS.** 72 backend tests, including 29 Companion tests. All 49 facial and speech regression tests plus frontend lint, TypeScript and production build passed. All 16 original dataset checksums matched after testing.
-- **Local checkout.** Before editing, verified a local ZIP checkpoint of all 24 Stage 04 working files, including the prior sample-label update, against base `ff61256`. It is under `%LOCALAPPDATA%\ASTRA\checkpoints\stage04-20261115T020307369022Z.zip`. The current branch remains `feature/native-health-intelligence`. Stage 05 is ready for review. The running app serves [ASTRA Companion](http://127.0.0.1:5180/companion) with its original database still paused at Day 45, revision 395.
+- **Local checkout.** Before editing, verified a local ZIP checkpoint of all 24 Stage 04 working files, including the prior sample-label update, against base `ff61256`. The current branch remains `feature/native-health-intelligence`. Stage 05 is ready for review. The running app serves [ASTRA Companion](http://127.0.0.1:5180/companion) with its original database still paused at Day 45, revision 395.
 
 ## Stage 06 — Scientific foundation and data transparency
 
@@ -139,3 +139,7 @@ Restyled the six existing screens without changing their markup, layout, data or
 - The application changes are CSS, a theme-color metadata value, and one static image. ASTRA 1.0 and the active mission database were left untouched.
 
 Ready for visual review. No commit or publication requested.
+
+## Stage 08 — Release candidate
+
+Prepared the frozen Stage 07 application for source release, with Apache-2.0 for original team contributions, dependency and asset attribution, a public-facing README, verified synthetic dataset metadata, and six application screenshots. The [release verification](RELEASE_VERIFICATION.md) records the fresh local clone and browser checks. The existing GitHub repository remains private pending review of historical repository content and optional dependency terms.
