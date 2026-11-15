@@ -77,3 +77,7 @@ The chat transcript stays in browser memory as you navigate within ASTRA. **New 
 ### Optional live research capture
 
 Open [Research Prototypes](http://127.0.0.1:5180/research-prototypes) to try the synthetic samples. For local webcam and microphone inference, follow [Windows research setup and startup](docs/LIVE_RESEARCH_CAPTURE.md).
+
+## Visual credit
+
+Backdrop: [Blue Marble, 2012](https://www.nasa.gov/image-article/blue-marble-2012/), NASA/NOAA/GSFC/Suomi NPP/VIIRS/Norman Kuring. ASTRA bundles a resized JPEG and applies the dark treatment in CSS. See [NASA's media use guidelines](https://www.nasa.gov/nasa-brand-center/images-and-media/). Use of this imagery does not imply endorsement.

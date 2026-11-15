@@ -1,6 +1,6 @@
 :root {
-  --health-secondary: #aaaaff;
-  --health-missing: #f5c892;
+  --health-secondary: #91b0ec;
+  --health-missing: var(--status-watch);
 }
 
 .health-profile {
@@ -22,7 +22,7 @@
   min-width: 0;
   min-height: 10rem;
   padding: .85rem;
-  background: #0d1c2d;
+  background: var(--inset-wash);
   border: 1px solid var(--color-line);
   border-radius: .6rem;
   overflow-wrap: anywhere;
@@ -70,13 +70,13 @@
   min-height: 44px;
   padding: .4rem .65rem;
   color: var(--color-muted);
-  background: #0b1a2a;
+  background: var(--input-wash);
   border: 1px solid var(--color-line);
   border-radius: .45rem;
   cursor: pointer;
 }
-.health-ranges button:hover { color: var(--color-ink); }
-.health-ranges button[aria-pressed="true"] { color: var(--color-cyan); background: #122c42; border-color: #39748b; }
+.health-ranges button:hover { color: var(--color-ink); border-color: var(--accent-edge); }
+.health-ranges button[aria-pressed="true"] { color: var(--color-cyan); background: var(--selection-wash); border-color: var(--accent-edge); }
 .health-figure { margin: 0; min-width: 0; }
 .health-chart-key {
   display: flex;
@@ -91,7 +91,19 @@
 .health-series-line, .health-gap-key { width: 1.15rem; border-top: 2px solid; }
 .health-series-line[data-dashed="true"], .health-gap-key { border-top-style: dashed; }
 .health-gap-key { display: inline-block; margin-right: .35rem; vertical-align: middle; color: var(--health-missing); }
-.health-chart { height: clamp(15rem, 35vw, 22rem); min-width: 0; }
+.health-chart {
+  height: clamp(15rem, 35vw, 22rem);
+  min-width: 0;
+  background: linear-gradient(180deg, #101f31, #0c1929);
+  border-radius: .45rem;
+  box-shadow: inset 0 0 0 1px #63809b38;
+}
+.health-chart .recharts-cartesian-grid-horizontal line { stroke: var(--chart-grid); }
+.health-chart .recharts-reference-line-line { stroke-opacity: .84; }
+.health-chart :is(.recharts-cartesian-axis-line, .recharts-cartesian-axis-tick-line) { stroke: var(--accent-edge); }
+@media (prefers-reduced-motion: no-preference) {
+  .health-ranges button { transition: color var(--control-motion), border-color var(--control-motion); }
+}
 .health-chart .recharts-surface:focus-visible { outline-offset: -2px; }
 .health-chart-caption { font-size: .8rem; margin-top: .3rem; }
 .health-chart-empty { padding: 1rem; border: 1px dashed var(--color-line); border-radius: .55rem; }
@@ -101,8 +113,8 @@
   max-width: min(14rem, 62vw);
   padding: .55rem .65rem;
   color: var(--color-ink);
-  background: #0b192a;
-  border: 1px solid var(--color-line);
+  background: linear-gradient(155deg, var(--panel-raised), #101f32);
+  border: 1px solid var(--accent-edge);
   border-radius: .45rem;
   box-shadow: 0 .3rem 1rem #02080f99;
   font-size: .8rem;
@@ -111,6 +123,7 @@
 .health-tooltip strong { color: var(--color-cyan); }
 .health-tooltip li + li { margin-top: .25rem; }
 .health-tooltip small { display: block; color: var(--color-muted); }
+.health-tooltip, .health-reference { font-variant-numeric: tabular-nums; }
 .health-records { margin-top: .95rem; border-top: 1px solid var(--color-line); padding-top: .45rem; }
 .health-records summary { padding-block: .45rem; }
 .health-records summary span { margin-left: .55rem; color: var(--color-muted); font-size: .8rem; }

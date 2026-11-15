@@ -7,16 +7,17 @@
   padding: .14rem .5rem;
   border: 1px solid currentColor;
   border-radius: 999px;
-  color: var(--color-muted);
+  color: var(--status-neutral);
+  background: color-mix(in srgb, currentColor 7%, transparent);
   font-size: .75rem;
   font-weight: 650;
 }
 .monitoring-badge .status-dot { background: currentColor; }
-.monitoring-badge[data-monitoring="STABLE"] { color: #8de0ca; }
-.monitoring-badge[data-monitoring="WATCH"] { color: #f5cb8c; }
-.monitoring-badge[data-monitoring="FLAGGED"] { color: #ffab8e; }
+.monitoring-badge[data-monitoring="STABLE"] { color: var(--status-good); }
+.monitoring-badge[data-monitoring="WATCH"] { color: var(--status-watch); }
+.monitoring-badge[data-monitoring="FLAGGED"] { color: var(--status-flagged); }
 .native-findings-list { display: grid; gap: .65rem; margin-top: .8rem; }
-.native-finding { min-width: 0; padding: .85rem; background: #0d1c2d; border: 1px solid var(--color-line); border-radius: .6rem; }
+.native-finding { min-width: 0; padding: .85rem; background: var(--inset-wash); border: 1px solid var(--color-line); border-radius: .6rem; }
 .native-finding p + p { margin-top: .35rem; }
 .native-finding-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: .45rem .7rem; margin-bottom: .35rem; }
 .native-finding-heading h3 { color: var(--color-ink); font-weight: 650; }

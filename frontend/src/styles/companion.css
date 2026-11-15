@@ -1,6 +1,6 @@
 .companion {
   display: grid;
-  background: #0d1d30;
+  background: linear-gradient(148deg, #172a40, #0d1b2d 64%);
   min-width: 0;
   grid-template-rows: auto minmax(16rem, 1fr) auto;
 }
@@ -45,7 +45,7 @@
 
 .companion-button:hover:not(:disabled), .companion-starters button:hover {
   border-color: #558295;
-  background: #193850;
+  background: var(--panel-raised);
 }
 
 .companion-button:disabled, .companion-send:disabled {
@@ -102,7 +102,7 @@
   padding-inline: .85rem;
   text-align: left;
   color: var(--color-ink);
-  background: #11263b;
+  background: var(--inset-wash);
 }
 
 .companion-starters svg { flex: none; color: var(--color-cyan); }
@@ -123,12 +123,12 @@
   padding: .8rem 1rem;
   border: 1px solid var(--color-line);
   border-radius: .75rem;
-  background: #11243a;
+  background: linear-gradient(145deg, #172e45, #102135);
 }
 
 .companion-message.user {
   justify-self: end;
-  background: #15364a;
+  background: linear-gradient(145deg, #203e55, #152b41);
   border-color: #315c70;
 }
 
@@ -151,7 +151,7 @@
 .companion-copy, .companion-error-actions { margin-top: .45rem; }
 .companion-copy .companion-button { padding-inline: .55rem; color: var(--color-muted); }
 .companion .companion-note { color: var(--color-muted); font-size: .8rem; }
-.companion .companion-note[data-tone="warn"], .companion-message .companion-error { color: #f5c892; }
+.companion .companion-note[data-tone="warn"], .companion-message .companion-error { color: var(--status-watch); }
 
 .companion-generating { display: flex; align-items: center; gap: .65rem; }
 .companion-pulse { width: .55rem; height: .55rem; border-radius: 50%; background: var(--color-cyan); animation: companion-pulse 1.2s ease-in-out infinite alternate; }
@@ -169,12 +169,12 @@
   resize: vertical;
   border: 1px solid var(--color-line);
   border-radius: .55rem;
-  background: #081624;
+  background: var(--input-wash);
   color: var(--color-ink);
 }
 
 .companion-entry textarea::placeholder { color: #a1b3c6; }
-.companion-send { flex: none; background: var(--color-cyan); border-color: var(--color-cyan); color: #071820; font-weight: 680; }
+.companion-send { flex: none; background: var(--accent-wash); border-color: #a1deee; color: #071820; font-weight: 680; }
 .companion-send:hover:not(:disabled) { background: #b4f2ff; }
 
 @media (max-width: 520px) {

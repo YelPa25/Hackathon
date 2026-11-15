@@ -12,7 +12,16 @@
 .replay-controls { align-items: end; margin-top: 1rem; }
 .replay-buttons { justify-content: flex-start; gap: .45rem; }
 .replay-buttons .data-control { margin: 0; }
-.replay-primary { background: var(--color-cyan); color: var(--color-space); font-weight: 650; }
+.replay-console .replay-primary {
+  background: var(--accent-wash);
+  border-color: #a1deee;
+  color: var(--color-space);
+  font-weight: 650;
+}
+.replay-console .replay-primary:hover:not(:disabled) { background: #b6eafa; border-color: #b6eafa; color: var(--color-space); }
+.replay-progress-meta, .replay-facts dd { font-variant-numeric: tabular-nums; }
+.replay-console progress::-webkit-progress-bar { background: #0b1929; border-radius: .35rem; }
+.replay-console progress::-webkit-progress-value { background: var(--accent-wash); border-radius: .35rem; }
 .replay-console button:disabled { opacity: .48; cursor: default; }
 .replay-error, .replay-reset { margin-top: .75rem; }
 .replay-reset button + button { margin-left: .45rem; }

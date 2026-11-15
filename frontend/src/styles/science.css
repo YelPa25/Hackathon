@@ -1,7 +1,7 @@
 .science {
-  --science-raised: #13283d;
-  --science-subtle: #0a1829;
-  --science-rule: #2b435b;
+  --science-raised: var(--panel-raised);
+  --science-subtle: var(--panel-low);
+  --science-rule: var(--color-line);
   --science-blue: #6e9fbe;
   --science-pad: clamp(1rem, 2.5vw, 1.65rem);
   display: grid;
@@ -52,7 +52,7 @@
   padding: .32rem;
   border: 1px solid var(--science-rule);
   border-radius: .65rem;
-  background: #0b192a;
+  background: var(--inset-wash);
 }
 
 .science-nav a {
@@ -103,7 +103,8 @@
   overflow: hidden;
   border: 1px solid var(--science-rule);
   border-radius: .75rem;
-  background: var(--color-panel);
+  background: var(--panel-wash);
+  box-shadow: var(--surface-depth);
 }
 
 .science-stats div { min-width: 0; padding: var(--science-pad); border-inline-end: 1px solid var(--science-rule); }
@@ -191,7 +192,7 @@
 .science summary::-webkit-details-marker { display: none; }
 .science summary > svg:last-child { flex-shrink: 0; color: var(--color-cyan); }
 .science details[open] > summary > svg:last-child { transform: rotate(180deg); }
-.science summary:hover { background: #1a3147; border-radius: .5rem; }
+.science summary:hover { background: var(--panel-raised); border-radius: .5rem; }
 .science-disclosure > summary span, .science-metric > summary span { min-width: 0; }
 .science-disclosure > summary strong, .science-metric summary strong { display: block; }
 .science summary small { display: block; margin-top: .15rem; color: var(--color-muted); font-size: .84rem; }
@@ -237,10 +238,10 @@
 .science-scale { margin: .15rem .27rem 0; }
 .science-scale-track { position: relative; height: .43rem; background: #253c54; border-radius: .22rem; }
 .science-scale-track span { position: absolute; }
-.science-scale-band { top: -.22rem; height: .85rem; background: #36768f; border-radius: .1rem; }
+.science-scale-band { top: -.22rem; height: .85rem; background: #3f7a94; border-radius: .1rem; }
 .science-scale-reference { top: -.27rem; width: 2px; height: .97rem; background: var(--color-cyan); }
-.science-scale-marker { top: -.3rem; width: .1rem; height: 1.03rem; background: #f5c892; }
-.science-scale-marker::before { content: ''; position: absolute; top: -.04rem; left: 50%; width: .42rem; height: .42rem; background: #f5c892; transform: translateX(-50%) rotate(45deg); }
+.science-scale-marker { top: -.3rem; width: .1rem; height: 1.03rem; background: var(--status-watch); }
+.science-scale-marker::before { content: ''; position: absolute; top: -.04rem; left: 50%; width: .42rem; height: .42rem; background: var(--status-watch); transform: translateX(-50%) rotate(45deg); }
 .science-scale-labels { display: flex; justify-content: space-between; gap: .22rem; margin-top: .65rem; font-family: var(--font-mono); }
 .science-profile-values { display: grid; gap: .3rem; }
 .science-profile-values div { display: flex; justify-content: space-between; gap: .5rem; padding-top: .28rem; border-top: 1px solid var(--science-rule); font-size: .84rem; }
@@ -251,9 +252,9 @@
 .science-rail-key { display: flex; flex-wrap: wrap; gap: .25rem .8rem; margin: .75rem 0 .4rem; font-size: .81rem; }
 .science-rail-key span { display: flex; align-items: center; gap: .35rem; }
 .science-rail-key i { margin: 0; }
-.science-key-variation { background: #36768f; }
+.science-key-variation { background: #3f7a94; }
 .science-key-baseline { background: var(--color-cyan); }
-.science-key-input { background: #f5c892; }
+.science-key-input { background: var(--status-watch); }
 
 .science-metric { border-top: 1px solid var(--science-rule); background: var(--science-subtle); }
 .science-metric:last-child { border-radius: 0 0 .8rem .8rem; }
@@ -262,7 +263,7 @@
 .science-verification > div { display: grid; grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr); gap: .3rem 1rem; padding: .75rem 0; }
 .science-verification > div + div { border-top: 1px solid var(--science-rule); }
 .science-verification dt { display: flex; gap: .5rem; align-items: baseline; font-weight: 620; }
-.science-verification dt svg { flex: none; align-self: center; color: #86e7c2; }
+.science-verification dt svg { flex: none; align-self: center; color: var(--status-good); }
 .science-verification dd { color: var(--color-muted); line-height: 1.6; }
 
 .science-ai-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8rem; }

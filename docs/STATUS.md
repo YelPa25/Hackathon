@@ -127,3 +127,15 @@ Data & Science now separates the installed synthetic bundle inventory from the l
 - Validation shown on the page is labeled as recorded evidence from checkpoint `e1480d0` (including 72 backend tests and 49 research prototype tests), rather than a live execution. Stage 06 did not re-run real Qwen generation or physical camera/microphone capture; Companion readiness still reported available. This is synthetic software verification, not clinical validation or flight qualification.
 
 Next: user visual review before Stage 07. No commit, push or merge.
+
+## Stage 07 — Atmospheric visual styling
+
+Restyled the six existing screens without changing their markup, layout, data or behavior. ASTRA 1.0 informed the layered navy gradients, restrained cyan lighting and panel edges. A shared fixed backdrop uses the locally bundled NASA Blue Marble composite (1,100 × 1,100 JPEG, 152,802 bytes; credit in the README). The original ASTRA 1.0 imagery has no recorded license and was not copied.
+
+- Browser: compared the Stage 06 checkpoint `81b99d0` against the new CSS on the same isolated Day 45 mission at 1920×1080 and 1366×768. Sidebar, panels, controls, chart frames, and sections had matching measured positions and dimensions on all six pages. All six had no horizontal overflow at 390×844. Saved paired screenshots at both desktop widths.
+- Browser interaction pass: crew, metric, range, and keyboard record expansion; Next Day revealed 6,393 observations and reset returned to Day 45; Data & Science method disclosure and comparison slider and selectors; both synthetic prototype sample charts; and a real local Qwen Companion reply. No camera or microphone was activated.
+- Automated: `npm.cmd run lint`, `npm.cmd run typecheck`, `npm.cmd run build`, and `uv run --locked --offline --python $astraPython --no-managed-python pytest -q` passed (73 backend tests). All 16 source checksums matched. The bundled photo loads from ASTRA’s own origin. There are no new packages, external fonts, or runtime asset requests outside that origin.
+- Dropdown follow-up. Styled the open menus through shared CSS while retaining native selects. Manually checked the Crew Health metric, Research Prototypes feature and sample menus, Replay speed, and Data & Science crew selector in the browser. Verified pointer and keyboard selection, Escape, a disabled option, and the open menu at 390 px. Frontend lint, TypeScript, and production build passed again.
+- The application changes are CSS, a theme-color metadata value, and one static image. ASTRA 1.0 and the active mission database were left untouched.
+
+Ready for visual review. No commit or publication requested.
