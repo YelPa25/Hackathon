@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 
+from astra.companion import companion_routes
 from astra.config import Settings
 from astra.db import SCHEMA_VERSION, initialize_database, probe_database, read_snapshot
 from astra.importer import install_history
@@ -134,4 +135,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return Health(status="ok", database_ready=True, dataset_ready=ready)
 
     app.include_router(router)
+    app.include_router(companion_routes())
     return app

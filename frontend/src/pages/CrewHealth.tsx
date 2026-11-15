@@ -1,8 +1,12 @@
 import { Activity, BedDouble, Droplets, HeartPulse, Thermometer, Zap } from 'lucide-react'
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
 import { ResearchSummary } from '../research/ResearchSummary'
-import { fetchObservationHistory } from '../services/mission'
+import { fetchObservationHistory, useMissionData } from '../services/mission'
+import { useReplay } from '../services/replay-state'
+import type { CrewAnalysis } from '../services/health-analysis'
+import { MonitoringBadge, PersonalFindings } from './HealthFindings'
 import type { Crew, CrewProfile, Latest, Observation } from '../services/mission'
 import { HealthChart, HistoryRecords } from './HealthChart'
 import type { HistoryWindow, Series } from './HealthChart'
@@ -46,46 +50,63 @@ function ReadingDetails({ title, records }: { title: string; records: Observatio
   </details>
 }
 
-function daysSinceReading(cutoff: string, readings: Observation[]) {
-  const oldest = readings.map(({ timestamp_utc }) => timestamp_utc.slice(0, 10)).sort()[0]
-  return oldest ? (Date.parse(cutoff.slice(0, 10)) - Date.parse(oldest)) / 86_400_000 : 0
-}
-
-function PrimaryReadings({ latest }: { latest: Latest }) {
+function PrimaryReadings({ latest, analysis }: { latest: Latest; analysis?: CrewAnalysis }) {
   return <Panel title="Health overview">
-    <p className="health-section-note">Latest available measurements · Synthetic</p>
+    <p className="health-section-note">Latest valid readings · Synthetic</p>
     <div className="primary-health-grid">{primary.map(({ title, metrics, icon: Icon }) => {
       const entries = metrics.map((metric) => ({
+        metric,
         reading: latest.items.find((item) => item.metric === metric),
         missing: latest.latest_missing.find((item) => item.metric === metric),
+        indicator: analysis?.indicators.find((item) => item.metric === metric),
+        reference: analysis?.baselines.find((item) => item.metric === metric),
       }))
       const valid = entries.flatMap(({ reading }) => reading ? [reading] : [])
       const gaps = entries.flatMap(({ missing }) => missing ? [missing] : [])
       const isPressure = metrics === pressureMetrics
-      const age = daysSinceReading(latest.cursor_utc, valid)
+      const paired = valid.length === 2 && valid[0].timestamp_utc === valid[1].timestamp_utc
+        && valid[0].source === valid[1].source && valid[0].activity_context === valid[1].activity_context
+      const statuses = entries.map((entry) => entry.indicator?.status)
+      const statistical = statuses.includes('FLAGGED') ? 'FLAGGED' : statuses.includes('WATCH') ? 'WATCH'
+        : statuses.every((status) => status === 'STABLE') && (!isPressure || paired) ? 'STABLE'
+        : analysis ? 'INSUFFICIENT_DATA' : undefined
       let status = readingStatus(valid[0], gaps[0])
-      if (isPressure && valid.length === 1) status = { text: 'Partial reading', tone: 'warn' }
-      if (isPressure && valid.length === 2 && valid[0].timestamp_utc !== valid[1].timestamp_utc) {
-        status = { text: 'Separate measurement times', tone: 'warn' }
-      }
+      if (gaps.length) status = { text: valid.length ? 'Newer sample missing' : 'Missing', tone: 'warn' }
+      else if (isPressure && valid.length && !paired) status = { text: 'No paired reading', tone: 'warn' }
+      else if (entries.some(({ indicator }) => indicator?.availability === 'STALE')) status = { text: 'Older reading', tone: 'warn' }
+      else if (valid.length && entries.every(({ indicator }) => indicator?.availability === 'CURRENT')) status = { text: 'Current', tone: 'good' }
       return <section className="health-metric" key={title} aria-label={title}>
         <h3><Icon size={17} aria-hidden="true" />{title}</h3>
-        <p className="health-metric-value">
-          <strong>{entries.map(({ reading }) => reading?.value ?? '—').join(isPressure ? ' / ' : '')}</strong>
+        {isPressure && !paired && valid.length ? <div className="pressure-components">{entries.map(({ metric, reading }) =>
+          <p key={metric}>{metric === 'systolic_bp' ? 'Systolic' : 'Diastolic'}: {reading ? describeReading(reading) : 'Unavailable'}</p>
+        )}</div> : <p className="health-metric-value">
+          <strong>{valid.length ? valid.map(({ value }) => value).join(' / ') : '—'}</strong>
           {valid[0] && <span>{unit(valid[0].unit)}</span>}
-        </p>
-        {isPressure && <p className="health-pressure-label">Systolic / Diastolic</p>}
-        <p className="health-reading-status" data-tone={status.tone}><span className="status-dot" aria-hidden="true" />{status.text}</p>
-        {age > 0 && <p className="health-pressure-label">
-          {isPressure && valid.length === 2 && valid[0].timestamp_utc !== valid[1].timestamp_utc ? 'Older component: ' : 'Recorded '}
-          {age} {age === 1 ? 'day' : 'days'} earlier
         </p>}
+        {isPressure && paired && <p className="health-pressure-label">Systolic / Diastolic · Same session</p>}
+        <p className="health-reading-status" data-tone={status.tone}><span className="status-dot" aria-hidden="true" />{status.text}</p>
+        {entries.map(({ metric, reference, indicator }) => reference && <p className="health-reference" key={metric}>
+          {isPressure && (metric === 'systolic_bp' ? 'Systolic' : 'Diastolic') + ' · '}
+          {reference.median === null ? 'Reference unavailable' : <>Reference {reference.median} {unit(reference.unit)}
+            {indicator?.difference != null && <> · {indicator.difference > 0 ? '+' : ''}{Number(indicator.difference.toFixed(2))} {unit(reference.unit)}</>}</>}
+        </p>)}
+        {statistical && <MonitoringBadge status={statistical} />}
         <ReadingDetails title={title} records={[...valid, ...gaps]} />
+        {analysis && <details className="health-details reading-details">
+          <summary>Statistical details</summary>
+          {entries.map(({ metric, reference, indicator }) => reference && <p key={metric}>
+            {metricLabel(metric)} · {reference.distinct_days} reference days ({reference.valid_sample_count} samples)
+            {reference.mad !== null && ' · MAD ' + Number(reference.mad.toFixed(3)) + ' · Effective MAD ' + Number(reference.effective_mad?.toFixed(3))}
+            {indicator?.modified_z != null && ' · Modified Z ' + indicator.modified_z.toFixed(2)}
+            {indicator?.slope_per_day != null && ' · Trend ' + indicator.slope_per_day.toFixed(2) + ' ' + unit(reference.unit) + '/day'}
+            {indicator?.rolling_median != null && ' · Recent median ' + indicator.rolling_median + ' ' + unit(reference.unit)}
+            {indicator?.age_hours != null && ' · Latest valid reading ' + Math.floor(indicator.age_hours) + ' h old'}
+          </p>)}
+        </details>}
       </section>
     })}</div>
   </Panel>
 }
-
 function OtherReadings({ latest, select }: { latest: Latest; select: (metric: string) => void }) {
   const metrics = [...new Set([...latest.items, ...latest.latest_missing].map(({ metric }) => metric))]
     .filter((metric) => !primaryMetrics.has(metric)).sort()
@@ -114,8 +135,8 @@ function historyWindow(cutoff: string, days: HistoryDays): HistoryWindow {
   return { from: start.toISOString().replace('.000Z', 'Z'), to: cutoff }
 }
 
-function MeasurementHistory({ crew, latest, metric, days, setMetric, setDays, recordsOpen, setRecordsOpen }: {
-  crew: string; latest: Latest; metric: string; days: HistoryDays
+function MeasurementHistory({ crew, latest, analysis, metric, days, setMetric, setDays, recordsOpen, setRecordsOpen }: {
+  crew: string; latest: Latest; analysis?: CrewAnalysis; metric: string; days: HistoryDays
   setMetric: (metric: string) => void; setDays: (days: HistoryDays) => void
   recordsOpen: boolean; setRecordsOpen: (open: boolean) => void
 }) {
@@ -149,11 +170,25 @@ function MeasurementHistory({ crew, latest, metric, days, setMetric, setDays, re
     </div>
     <Resource<Observation[]> url={'/api/observations?' + query} load={fetchObservationHistory}>{(records) =>
       records.length ? <>
-        <HealthChart records={records} series={series} window={window} title={title} />
+        <HealthChart records={records} series={series} window={window} title={title} baselines={analysis?.baselines} indicators={analysis?.indicators} />
         <HistoryRecords records={records} open={recordsOpen} onOpenChange={setRecordsOpen} />
       </> : <p className="health-chart-empty">No recorded measurements in this range. Select a longer range to look further back.</p>
     }</Resource>
   </section>
+}
+
+function AnalyzedReadings({ crew, latest, children }: {
+  crew: string; latest: Latest; children: (analysis?: CrewAnalysis) => ReactNode
+}) {
+  const { state } = useReplay()
+  const result = useMissionData<CrewAnalysis>('/api/crew/' + encodeURIComponent(crew) + '/analysis', 0, undefined, state?.cursor_utc)
+  const data = result.state === 'ready' && result.data.cursor_utc === latest.cursor_utc
+    && result.data.cursor_utc === state?.cursor_utc ? result.data : undefined
+  return <>
+    <PrimaryReadings latest={latest} analysis={data} />
+    <PersonalFindings analysis={data} state={result.state} />
+    {children(data)}
+  </>
 }
 
 export default function CrewHealth() {
@@ -189,13 +224,12 @@ export default function CrewHealth() {
         </div>
       </Panel>
       <ResearchSummary />
-      <Resource<Latest> url={'/api/observations/latest?crew_id=' + id} live>{(latest) => <>
-        <PrimaryReadings latest={latest} />
-        <MeasurementHistory crew={selected.crew_id} latest={latest} metric={metric} days={days}
+      <Resource<Latest> url={'/api/observations/latest?crew_id=' + id} live>{(latest) => <AnalyzedReadings crew={selected.crew_id} latest={latest}>{(analysis) => <>
+        <MeasurementHistory crew={selected.crew_id} latest={latest} analysis={analysis} metric={metric} days={days}
           setMetric={(value) => select('metric', value)} setDays={(value) => select('days', String(value))}
           recordsOpen={recordsOpen} setRecordsOpen={setRecordsOpen} />
         <OtherReadings latest={latest} select={(value) => select('metric', value)} />
-      </>}</Resource>
+      </>}</AnalyzedReadings>}</Resource>
     </div>
   }}</Resource>
 }

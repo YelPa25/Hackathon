@@ -5,6 +5,7 @@ import { ReplayProvider } from './app/ReplayProvider'
 import { App } from './app/App'
 import { ResearchProvider } from './research/ResearchProvider'
 import './styles/global.css'
+import './styles/health-intelligence.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

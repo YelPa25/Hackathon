@@ -55,7 +55,7 @@ function MonitoringPanel({ modality, available, view, leaveResult }: {
     <details id={modality + '-sample'} className="research-sample" open={open} onToggle={(event) => {
       if (event.currentTarget.open !== open) editSample({ open: event.currentTarget.open })
     }}>
-      <summary>Play a synthetic sample</summary>
+      <summary>Last saved sample</summary>
     <div className="research-controls">
       <label className="data-label">Demo input
         <select disabled={active} value={scenario} onChange={(event) => {
@@ -77,7 +77,7 @@ function MonitoringPanel({ modality, available, view, leaveResult }: {
       </div>
     </div>
     <div className="research-readout">
-      <p className="research-state" role="status">{active ? 'Playing synthetic windows' : finished ? 'Playback complete' : current ? 'Stopped' : 'Ready'}</p>
+      <p className="research-state" role="status">{active || finished ? 'Last saved sample' : current ? 'Stopped' : 'Ready'}</p>
       <p>{current ? detectorLabel[current.state] : 'Play a sample to see calibration and detector results.'}</p>
       {current && <>
         <div className="research-calibration">

@@ -1,0 +1,33 @@
+
+.monitoring-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  width: fit-content;
+  padding: .14rem .5rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: var(--color-muted);
+  font-size: .75rem;
+  font-weight: 650;
+}
+.monitoring-badge .status-dot { background: currentColor; }
+.monitoring-badge[data-monitoring="STABLE"] { color: #8de0ca; }
+.monitoring-badge[data-monitoring="WATCH"] { color: #f5cb8c; }
+.monitoring-badge[data-monitoring="FLAGGED"] { color: #ffab8e; }
+.native-findings-list { display: grid; gap: .65rem; margin-top: .8rem; }
+.native-finding { min-width: 0; padding: .85rem; background: #0d1c2d; border: 1px solid var(--color-line); border-radius: .6rem; }
+.native-finding p + p { margin-top: .35rem; }
+.native-finding-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: .45rem .7rem; margin-bottom: .35rem; }
+.native-finding-heading h3 { color: var(--color-ink); font-weight: 650; }
+.native-note { color: var(--color-muted); font-size: .8rem; }
+.native-details { font-size: .8rem; margin-top: .45rem; }
+.native-details summary, .native-link { color: var(--color-cyan); cursor: pointer; }
+.native-details ul { margin: .45rem 0; padding-inline-start: 1.2rem; list-style: disc; }
+.native-link { display: inline-block; margin-top: .4rem; }
+.health-reference { margin-top: .4rem; font-size: .82rem; color: var(--color-muted); }
+.health-metric .monitoring-badge { margin-top: .4rem; }
+.pressure-components { display: grid; gap: .15rem; margin-top: .55rem; font-size: .84rem; }
+.health-chart-reference { display: inline-block; border-top: 2px dashed var(--color-muted); width: 1rem; margin-right: .35rem; vertical-align: middle; }
+.health-chart-unusual { display: inline-block; width: .55rem; height: .55rem; border: 2px solid var(--health-missing); border-radius: 50%; margin-inline: .6rem .25rem; }
+#personal-findings { scroll-margin-top: 1rem; }

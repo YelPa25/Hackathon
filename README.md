@@ -55,6 +55,21 @@ This repository includes the six runtime dataset inputs and their original SHA25
 
 From `backend`, run `uv run --locked --offline --python $astraPython --no-managed-python pytest -q` with the original bundle in one of the default locations. From `frontend`, run `npm.cmd run lint`, `npm.cmd run typecheck` and `npm.cmd run build`. Stop Vite before reinstalling dependencies on Windows so it releases native package files.
 
+### Optional ASTRA Companion
+
+Open [ASTRA Companion](http://127.0.0.1:5180/companion) for conversation, stories, quizzes and text games. It uses the existing Ollama runtime on `http://127.0.0.1:11434` with the exact model `qwen3:4b-instruct-2507-q4_K_M`. Neither the mission console nor its health features needs Ollama.
+
+In PowerShell, run `ollama list` and check for that exact tag. If Ollama is already running, the Companion screen can verify it. For a manual local-only Ollama session, quit Ollama from the Windows taskbar first if its tray app already owns the port, then run:
+
+```powershell
+$env:OLLAMA_NO_CLOUD = '1'
+ollama serve
+```
+
+Open Companion and wait for **Qwen3 · Running locally**. Pick a starter or type a message, then press Enter. Shift+Enter adds a line. The first reply may take a few seconds while Ollama loads the model. If the service becomes unavailable, keep the tab open, restart Ollama and use **Check again** and **Retry**. For an existing ASTRA backend started without reload, restart FastAPI from this checkout once to load the Companion routes.
+
+The chat transcript stays in browser memory as you navigate within ASTRA. **New Conversation** clears it. Reloading the app or closing the tab ends the session. Ollama receives only the recreational prompt and a bounded set of chat messages over loopback. The chat is for recreation. Use ASTRA's dedicated screens for health and mission information. [Ollama local-only setup](https://docs.ollama.com/faq#how-do-i-disable-ollamas-cloud-features)
+
 ### Optional live research capture
 
 Open [Research Prototypes](http://127.0.0.1:5180/research-prototypes) to try the synthetic samples. For local webcam and microphone inference, follow [Windows research setup and startup](docs/LIVE_RESEARCH_CAPTURE.md).

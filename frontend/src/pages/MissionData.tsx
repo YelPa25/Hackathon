@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { ResearchSummary } from '../research/ResearchSummary'
 import { Link } from 'react-router'
+import { FindingCard, MonitoringBadge } from './HealthFindings'
 import type { Dataset, Mission, Observation } from '../services/mission'
 import { capitalize, formatUtc, label, metricLabel, Panel, Resource, unit } from './mission-display'
 
@@ -44,12 +45,30 @@ export function MissionOverview({ readiness }: { readiness: ReactNode }) {
             {metricLabel(mission.crew_readings[crew.crew_id].metric)} · <ReadingValue reading={mission.crew_readings[crew.crew_id]} />
           </> : 'Reading unavailable'}</span>
           {mission.crew_readings[crew.crew_id] && <span>{formatUtc(mission.crew_readings[crew.crew_id].timestamp_utc)}</span>}
+          {mission.crew_monitoring?.[crew.crew_id] && <>
+            <MonitoringBadge status={mission.crew_monitoring[crew.crew_id].status} />
+            <span>{mission.crew_monitoring[crew.crew_id].headline}</span>
+            {mission.crew_monitoring[crew.crew_id].status !== 'INSUFFICIENT_DATA' &&
+              !mission.crew_monitoring[crew.crew_id].coverage.sufficient && <span>Limited monitoring coverage</span>}
+          </>}
         </Link>
       </li>)}</ul>
+    </Panel>
+    <Panel title="Health intelligence">
+      <p className="native-note">Native statistical monitoring · Shareable crew readings · Synthetic</p>
+      {!mission.analysis_available ? <p role="status">Statistical analysis is unavailable. Stored readings remain available.</p>
+        : !mission.health_findings.length ? <p>No current concerns detected in available shared readings.</p>
+        : <div className="native-findings-list">{mission.health_findings.map((finding) =>
+          <FindingCard key={finding.crew_id} finding={finding}
+            crewName={mission.crew_summaries.find((crew) => crew.crew_id === finding.crew_id)?.display_name}
+            method={mission.analysis_method_version ?? undefined} />)}</div>}
     </Panel>
     <Panel title="Latest valid cabin readings">
       <ReadingCards items={mission.cabin_readings} missing={mission.cabin_latest_missing} />
       <p className="dataset-note">CO₂ concentration in ppm is derived from an assumed cabin pressure of 760 mmHg. Partial pressure is the primary CO₂ reading.</p>
+      {!!mission.cabin_findings?.length && <div className="native-findings-list">{mission.cabin_findings.map((finding) =>
+        <FindingCard key={finding.rule_id + finding.title} finding={finding} method={mission.analysis_method_version ?? undefined} />
+      )}</div>}
     </Panel>
   </div>}</Resource>
 }
@@ -78,6 +97,15 @@ export function DataScience() {
           <dd>{metric.scope === 'person' ? 'Crew' : 'Cabin'} · {label(metric.measurement_cadence)}</dd>
         </div>
       )}</dl>
+    </Panel>
+    <Panel title="How health intelligence works">
+      <ul className="reference-list">
+        <li><strong>Personal reference.</strong> Days 1–{dataset.historical_days} establish a fixed reference for each person and measurement context. ASTRA uses daily medians and the median absolute deviation (MAD) for numerical readings. For self-reports it compares differences on the original rating scale.</li>
+        <li><strong>Changes and trends.</strong> A modified Z-score describes how far a reading is from the reference. ASTRA also checks whether the change continues across different measurement days or appears alongside related findings.</li>
+        <li><strong>Data limits.</strong> Unpublished observations are excluded. Missing readings stay missing. Old readings can remain visible in history but do not count as current. Mission Overview uses shareable evidence; shared cabin findings include only aggregate opt-in counts. This demo has no per-user authentication.</li>
+        <li><strong>Evidence boundary.</strong> Statistical methods and research references inform the design. ASTRA chose its detection thresholds for this synthetic demonstration. They are not NASA medical standards or clinically validated limits. An overlap between observations cannot establish a cause.</li>
+      </ul>
+      <p><a className="native-link" href="https://itl.nist.gov/div898/handbook/eda/section3/eda35h.htm">NIST reference for the modified Z-score</a></p>
     </Panel>
     <Panel title="Research references">
       <ul className="reference-list">{dataset.references.map((reference) => <li key={reference.source_id}>

@@ -3,6 +3,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, FiniteFloat, model_validator
 
+from astra.health_models import Finding, MonitoringSummary
+
 Scope = Literal["person", "cabin"]
 Context = Literal["rest", "exercise", "recovery", "sleep", "self_report", "unspecified"]
 SourceStatus = Literal["VERIFIED", "UNAVAILABLE", "INVALID"]
@@ -111,6 +113,11 @@ class Mission(BaseModel):
     cabin_readings: list[Observation]
     cabin_latest_missing: list[Observation]
     insights: list[str]
+    analysis_available: bool = False
+    analysis_method_version: str | None = None
+    crew_monitoring: dict[str, MonitoringSummary] = Field(default_factory=dict)
+    health_findings: list[Finding] = Field(default_factory=list)
+    cabin_findings: list[Finding] = Field(default_factory=list)
 
 
 class Metric(BaseModel):

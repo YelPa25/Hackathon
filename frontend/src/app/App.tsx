@@ -3,9 +3,12 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router'
 import { DataScience, MissionOverview, MissionReplay } from '../pages/MissionData'
 import { screens } from '../pages/screens'
+import { useCompanionSession } from '../companion/session'
+import type { CompanionSession } from '../companion/session'
 import { useHealth } from '../services/health'
 import type { Connection } from '../services/health'
 
+const Companion = lazy(() => import('../pages/Companion'))
 const CrewHealth = lazy(() => import('../pages/CrewHealth'))
 const ResearchPrototypes = lazy(() => import('../pages/ResearchPrototypes'))
 
@@ -64,12 +67,13 @@ function Readiness({ connection }: { connection: Connection }) {
   </section>
 }
 
-function Screen({ screen, connection }: { screen: typeof screens[number]; connection: Connection }) {
+function Screen({ screen, connection, companion }: { screen: typeof screens[number]; connection: Connection; companion: CompanionSession }) {
   const { title, description } = screen
   const content = {
     '/': <MissionOverview readiness={<Readiness connection={connection} />} />,
     '/crew-health': <Suspense fallback={<p role="status">Loading Crew Health…</p>}><CrewHealth /></Suspense>,
     '/mission-replay': <MissionReplay />,
+    '/companion': <Suspense fallback={<p role="status">Loading ASTRA Companion…</p>}><Companion session={companion} /></Suspense>,
     '/data-and-science': <DataScience />,
     '/research-prototypes': <Suspense fallback={<p role="status">Loading research prototypes</p>}>
       <ResearchPrototypes />
@@ -86,6 +90,7 @@ function Screen({ screen, connection }: { screen: typeof screens[number]; connec
 
 export function App() {
   const connection = useHealth()
+  const companion = useCompanionSession()
   const { label, tone } = statuses[connection]
   const location = useLocation()
   const main = useRef<HTMLElement>(null)
@@ -116,7 +121,7 @@ export function App() {
       <main className="content" id="main" tabIndex={-1} ref={main}>
         <Routes>
           {screens.map((screen) => <Route key={screen.path} path={screen.path}
-            element={<Screen key={screen.path} screen={screen} connection={connection} />} />)}
+            element={<Screen key={screen.path} screen={screen} connection={connection} companion={companion} />} />)}
           <Route path="*" element={<section className="screen workspace-inner" aria-labelledby="screen-title">
             <h1 id="screen-title">Page not found</h1>
             <Link className="return-link" to="/">Mission Overview <ArrowUpRight size={16} aria-hidden="true" /></Link>

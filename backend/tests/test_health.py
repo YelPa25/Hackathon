@@ -52,7 +52,7 @@ def test_invalid_database_starts_with_honest_health(tmp_path):
 
 def test_error_contract_and_private_routes(tmp_path):
     with TestClient(create_app(Settings(environment="test", database_path=tmp_path / "astra.db"))) as client:
-        for path in ("/api/crew/AST-001/analysis", "/replay_future_HIDDEN_DAY46_to_DAY90.csv",
+        for path in ("/replay_future_HIDDEN_DAY46_to_DAY90.csv",
                      "/EVALUATION_ONLY_scenario_truth_NOT_FOR_LIVE_APP.csv"):
             response = client.get(path)
             assert response.status_code == 404

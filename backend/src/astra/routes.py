@@ -1,3 +1,4 @@
+import logging
 import sqlite3
 from contextlib import contextmanager
 from typing import Iterator
@@ -5,8 +6,11 @@ from typing import Iterator
 from fastapi import APIRouter, Request
 
 from astra.db import read_snapshot
+from astra.health_engine import HealthSnapshot
+from astra.health_models import CrewAnalysis
+from astra.health_statistics import VERSION
 from astra.models import (
-    CrewList, CrewProfile, DatasetInfo, DatasetMetadata, LatestObservations, Metric, Mission,
+    Context, CrewList, CrewProfile, DatasetInfo, DatasetMetadata, LatestObservations, Metric, Mission,
     ObservationPage, ReplayCommand, ReplayState, ReplayView,
 )
 from astra.reads import (
@@ -16,6 +20,7 @@ from astra.reads import (
 from astra.replay import replay_view
 
 router = APIRouter(prefix="/api")
+logger = logging.getLogger(__name__)
 
 
 @contextmanager
@@ -40,6 +45,17 @@ def crew(request: Request):
 def profile(request: Request, crew_id: str):
     with mission_snapshot(request) as (connection, _):
         return crew_profile(connection, crew_id)
+
+
+@router.get("/crew/{crew_id}/analysis", response_model=CrewAnalysis)
+def analysis(request: Request, crew_id: str, metric: str | None = None, context: Context | None = None):
+    with mission_snapshot(request) as (connection, replay):
+        ObservationFilters(crew_id=crew_id, metric=metric, context=context).check(connection)
+        try:
+            return HealthSnapshot(connection, replay).subject(crew_id, metric, context)
+        except Exception as exc:
+            logger.exception("Subject analysis unavailable")
+            raise ApiError(503, "analysis_unavailable", "Statistical analysis is unavailable. Stored readings are still available.") from exc
 
 
 @router.get("/observations", response_model=ObservationPage)
@@ -75,11 +91,21 @@ def mission(request: Request):
             ).fetchone()
             if latest is not None:
                 crew_readings[crew_id] = observation_dto(latest)
+        analysis_fields = {}
+        try:
+            snapshot = HealthSnapshot(connection, replay)
+            monitoring, findings = snapshot.mission(profile["crew_id"] for profile in summaries)
+            analysis_fields = {
+                "analysis_available": True, "analysis_method_version": VERSION,
+                "crew_monitoring": monitoring, "health_findings": findings, "cabin_findings": snapshot.cabin,
+            }
+        except Exception:
+            logger.exception("Mission analysis unavailable; returning stored readings")
         return {
             "revision": replay.revision, "cursor_utc": replay.cursor_utc, "mission_day": replay.mission_day,
             "replay_status": replay.status, "crew_summaries": summaries, "crew_readings": crew_readings,
             "cabin_readings": readings, "cabin_latest_missing": missing,
-            "insights": [],
+            "insights": [], **analysis_fields,
         }
 
 

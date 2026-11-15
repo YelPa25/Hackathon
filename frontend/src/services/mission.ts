@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import type { Finding, MonitoringSummary } from './health-analysis'
 
 export type Crew = { crew_id: string; display_name: string; role: string }
 export type CrewProfile = Crew & { age_years: number; activity_pref: string }
@@ -22,6 +23,8 @@ export type Mission = {
   crew_readings: Record<string, Observation>; cabin_latest_missing: Observation[]
   mission_day: number; cursor_utc: string; synthetic: true; replay_status: Replay["status"]
   crew_summaries: Crew[]; cabin_readings: Observation[]
+  analysis_available: boolean; analysis_method_version: string | null
+  crew_monitoring: Record<string, MonitoringSummary>; health_findings: Finding[]; cabin_findings: Finding[]
 }
 export type Replay = {
   dataset_id: string; mission_day: number; cursor_utc: string

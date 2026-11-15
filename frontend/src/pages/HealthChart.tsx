@@ -1,8 +1,9 @@
 import {
-  Bar, CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  Bar, CartesianGrid, ComposedChart, Line, ReferenceDot, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import type { TooltipContentProps } from 'recharts'
 import type { Observation } from '../services/mission'
+import type { Baseline, Comparison } from '../services/health-analysis'
 import { capitalize, formatExactUtc, label, metricLabel, unit } from './mission-display'
 
 export type Series = { metric: string; name: string; color: string; dashed?: boolean }
@@ -33,8 +34,9 @@ function ChartDetails({ active, label: timestamp, points, series }: TooltipConte
   </div>
 }
 
-export function HealthChart({ records, series, window, title }: {
+export function HealthChart({ records, series, window, title, baselines, indicators }: {
   records: Observation[]; series: Series[]; window: HistoryWindow; title: string
+  baselines?: Baseline[]; indicators?: Comparison[]
 }) {
   const points = new Map<number, Point>()
   for (const reading of records) {
@@ -52,6 +54,12 @@ export function HealthChart({ records, series, window, title }: {
 
   const discrete = firstValid.unit === 'score_0_4'
   const bar = firstValid.metric === 'sleep_duration' || firstValid.metric === 'exercise_duration'
+  const references = series.flatMap((item) => {
+    const ref = baselines?.find((candidate) => candidate.metric === item.metric && candidate.kind === 'continuous')
+    return ref?.median != null ? [{ ...item, median: ref.median }] : []
+  })
+  const unusualIds = new Set(indicators?.flatMap((item) => item.unusual_ids))
+  const unusual = records.filter((row) => row.value !== null && unusualIds.has(row.observation_id))
   const measureUnit = discrete ? 'Score (0–4)' : unit(firstValid.unit)
   return <figure className="health-figure" aria-label={title + ' history'}>
     <figcaption className="health-chart-key">
@@ -86,9 +94,17 @@ export function HealthChart({ records, series, window, title }: {
                 dot={{ r: discrete ? 4 : 2.5, fill: color, stroke: discrete ? color : 'var(--color-panel)', strokeWidth: 1 }}
                 activeDot={{ r: 5, fill: color, stroke: 'var(--color-panel)' }}
                 connectNulls={false} isAnimationActive={false} />)}
+          {references.map(({ metric, median, color }) => <ReferenceLine key={metric} y={median} stroke={color}
+            strokeDasharray="3 5" strokeOpacity={0.7} ifOverflow="extendDomain" />)}
+          {unusual.map((reading) => <ReferenceDot key={reading.observation_id} x={Date.parse(reading.timestamp_utc)}
+            y={reading.value!} r={4.5} fill="var(--color-panel)" stroke="var(--health-missing)" strokeWidth={2} />)}
         </ComposedChart>
       </ResponsiveContainer>
     </div>
+    {(references.length > 0 || unusual.length > 0) && <p className="health-chart-caption">
+      {references.length > 0 && <><span className="health-chart-reference" aria-hidden="true" />Personal reference: {references.map(({ name, median }) => name + ' ' + median + ' ' + measureUnit).join(' · ')}</>}
+      {unusual.length > 0 && <><span className="health-chart-unusual" aria-hidden="true" />Strong statistical deviation</>}
+    </p>}
     {(discrete || gaps.length > 0) && <p className="health-chart-caption">
       {discrete && 'Each point is one recorded score. '}
       {gaps.length > 0 && <><span className="health-gap-key" aria-hidden="true" />Dashed amber markers indicate missing readings.</>}
@@ -99,9 +115,16 @@ export function HealthChart({ records, series, window, title }: {
 export function HistoryRecords({ records, open, onOpenChange }: {
   records: Observation[]; open: boolean; onOpenChange: (open: boolean) => void
 }) {
-  return <details className="health-details health-records" open={open}
-    onToggle={(event) => onOpenChange(event.currentTarget.open)}>
-    <summary>Detailed records <span>{records.length} observations</span></summary>
+  return <details className="health-details health-records" open={open}>
+    <summary onClick={(event) => {
+      // Only user activation changes the preference; remounts can emit native toggle events.
+      event.preventDefault()
+      onOpenChange(!open)
+    }} onKeyDown={(event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return
+      event.preventDefault()
+      if (!event.repeat) onOpenChange(!open)
+    }}>Detailed records <span>{records.length} observations</span></summary>
     <div className="observation-scroll" role="region" aria-label="Historical readings" tabIndex={0}>
       <table className="observation-table">
         <caption className="sr-only">Exact stored observations, newest first</caption>

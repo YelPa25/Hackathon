@@ -1,6 +1,8 @@
 # ASTRA 2.0 research prototype integration plan
 
-Status: Architecture approved in principle. Updated after source review. Scope is handoff preparation.
+Status: Historical handoff proposal. See [Windows live capture](LIVE_RESEARCH_CAPTURE.md) for the implemented facial and speech integration.
+
+Stage 04 adds ASTRA's [native statistical engine](HEALTH_INTELLIGENCE_METHODOLOGY.md) on top of the approved shared checkpoint. It consumes only observations published in the Core replay snapshot. Facial and speech outputs remain independent and visibly experimental. Neither the teammate physiology model nor Qwen is integrated into Core. The starting-point and branch-review notes below describe the earlier review, before this implementation.
 
 ## Verified starting point
 
