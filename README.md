@@ -161,3 +161,8 @@ Developed by the ASTRA team for the [2026 NASA Space Apps Challenge](https://www
 Original team contributions are licensed under [Apache License 2.0](LICENSE). Upstream packages, models, and the Earth image retain their own terms. The backdrop is NASA’s [Blue Marble, 2012](https://www.nasa.gov/image-article/blue-marble-2012/), credited to NASA/NOAA/GSFC/Suomi NPP/VIIRS/Norman Kuring. See [third-party notices](THIRD_PARTY_NOTICES.md) for source links and restrictions.
 
 ## Team: Kernel_Panic
+### Members:
+- Yelyzar Pashchenko
+- Andrii Pikuza
+- Tsimur Bardziyan
+- Serhii Hoi
