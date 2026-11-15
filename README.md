@@ -150,7 +150,7 @@ OpenAI ChatGPT supported concept development, scientific exploration, architectu
 
 ## Scientific limits
 
-ASTRA uses fictional crew and simulated measurements. Coverage varies by metric and time. The project-defined statistical thresholds have no clinical validation, the dataset contains no direct radiation measurements, and cabin associations do not establish causation. Facial and acoustic features are experimental and do not establish emotion, stress, or illness. ASTRA has no flight qualification or individual authentication. Use synthetic inputs for the demonstration and treat locally saved research calibration as private.
+ASTRA uses fictional crew and simulated measurements. Coverage varies by metric and time. The project-defined statistical thresholds have no clinical validation, the dataset contains no direct radiation measurements, and cabin associations do not establish causation. Facial and acoustic features are experimental and do not establish emotion, stress, or illness. ASTRA has no flight qualification or individual authentication. Use synthetic inputs for the demonstration purpose.
 
 ## Contributors and NASA Space Apps
 
@@ -159,3 +159,5 @@ Developed by the ASTRA team for the [2026 NASA Space Apps Challenge](https://www
 ## License and credits
 
 Original team contributions are licensed under [Apache License 2.0](LICENSE). Upstream packages, models, and the Earth image retain their own terms. The backdrop is NASA’s [Blue Marble, 2012](https://www.nasa.gov/image-article/blue-marble-2012/), credited to NASA/NOAA/GSFC/Suomi NPP/VIIRS/Norman Kuring. See [third-party notices](THIRD_PARTY_NOTICES.md) for source links and restrictions.
+
+## Team: Kernel_Panic
