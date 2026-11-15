@@ -3,7 +3,7 @@ import sqlite3
 from contextlib import contextmanager
 from typing import Iterator
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Query, Request
 
 from astra.db import read_snapshot
 from astra.health_engine import HealthSnapshot
@@ -18,6 +18,7 @@ from astra.reads import (
     latest_observations, observation_dto, replay_state, visible_observations,
 )
 from astra.replay import replay_view
+from astra.science import PersonalizationDemo, compare_hypothetical_resting_hr
 
 router = APIRouter(prefix="/api")
 logger = logging.getLogger(__name__)
@@ -137,3 +138,8 @@ def data(request: Request) -> DatasetInfo:
             imported_at_utc=row["imported_at_utc"], historical_count=row["historical_count"],
             historical_missing_count=row["historical_missing_count"],
         )
+
+@router.get("/data/personalization", response_model=PersonalizationDemo)
+def personalize(request: Request, bpm: int = Query(default=70, ge=40, le=120)) -> PersonalizationDemo:
+    with mission_snapshot(request) as (connection, replay):
+        return compare_hypothetical_resting_hr(connection, replay, bpm)

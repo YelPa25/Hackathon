@@ -25,7 +25,7 @@ npm.cmd ci
 npm.cmd run dev
 ```
 
-Open the [ASTRA console](http://127.0.0.1:5180/). Mission Overview shows four crew members and cabin readings. Crew Health shows crew profiles, latest readings and historical samples. Mission Replay opens at the saved position. A fresh database starts at Day 45, and a backend restart pauses active playback. Data & Science shows synthetic provenance, coverage and references.
+Open the [ASTRA console](http://127.0.0.1:5180/). Mission Overview shows four crew members and cabin readings. Crew Health shows crew profiles, latest readings and historical samples. Mission Replay opens at the saved position. A fresh database starts at Day 45, and a backend restart pauses active playback. [Data & Science](http://127.0.0.1:5180/data-and-science) shows synthetic provenance, the live replay cutoff, the statistical method, and the scientific sources. Try **Personalization** to compare one hypothetical resting heart rate against two fixed Days 1–45 references.
 
 Press Ctrl+C in each terminal to stop its process. If verifying recovery, restart FastAPI and select **Retry** on any view that failed while it was down. This checkout uses ports 8050 and 5180.
 
@@ -54,6 +54,10 @@ This repository includes the six runtime dataset inputs and their original SHA25
 ## Checks
 
 From `backend`, run `uv run --locked --offline --python $astraPython --no-managed-python pytest -q` with the original bundle in one of the default locations. From `frontend`, run `npm.cmd run lint`, `npm.cmd run typecheck` and `npm.cmd run build`. Stop Vite before reinstalling dependencies on Windows so it releases native package files.
+
+## AI-assisted development
+
+The ASTRA team set the requirements, chose the methods, reviewed the work and made the final engineering decisions. OpenAI ChatGPT supported research exploration, planning and review. OpenAI Codex helped implement, test and document the application. Neither tool, an OpenAI API key, nor cloud inference is required to run the native analysis. The optional local Qwen model is a separate runtime for recreational Companion chat.
 
 ### Optional ASTRA Companion
 

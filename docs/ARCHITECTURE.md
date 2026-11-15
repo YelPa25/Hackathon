@@ -26,9 +26,13 @@ Use one shell with four Core navigation entries. Research Prototypes is a separa
 | Mission Overview | Show the simulated clock, playback state, four crew summaries, latest available cabin metrics and concise findings. Distinguish missing and stale data from valid readings. Link directly to a selected astronaut in Crew Health. |
 | Crew Health | Select an astronaut and metric or activity context. Show the latest reading with time, source and quality, visible history, the personal reference and a short explanation of any change or coverage gap. Keep private self-reports in the selected profile's view. |
 | Mission Replay | Start at Day 45 and show play, pause, next timestamp, next day and reset. List revealed events in chronological order. Show that future records are locked without exposing their contents, timestamps or scenario labels. Speed selection can follow core verification. |
-| Data & Science | Show dataset ID, version, synthetic provenance, methodology, limitations, metric dictionary and reviewed NASA/CDC source links. Explain space radiation, isolation and confinement, distance from Earth, altered gravity, and hostile or closed environments. Keep this view useful offline. |
+| Data & Science | Distinguish the published bundle inventory from the live replay cutoff. Show synthetic provenance, NASA’s five hazards, native methods and limitations, a read-only hypothetical comparison, the metric dictionary, checkpointed validation, reviewed references, and AI-assisted development attribution. The page uses local assets and APIs. Source links are optional outbound navigation. |
 
 Scope ends at measurements, trends and explainable findings. Guided medical assessment, medical cases and checklists, Earth reporting and communications, biometric emotion recognition, mandatory LLMs and unvalidated disease prediction are excluded.
+## Science comparison
+
+The Data & Science comparison reads the replay-gated, shareable Days 1–45 resting-heart-rate history in a single SQLite snapshot and calls the same baseline and deviation functions used by native analysis. The hypothetical reading is passed directly to the calculation. It is neither stored nor used by production monitoring. The endpoint returns reference summaries; it exposes no raw observations, private reports, or future records.
+
 ## ASTRA Companion
 
 Companion is the only browser route that calls `/api/companion`. The browser keeps the draft, transcript and pending request in application memory across page navigation. It sends the current message and bounded complete user/assistant pairs. Closing or reloading the app or choosing New Conversation clears the transcript.

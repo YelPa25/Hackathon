@@ -1,7 +1,7 @@
 import { ArrowUpRight, Database, Menu, Orbit, Radio, X } from 'lucide-react'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router'
-import { DataScience, MissionOverview, MissionReplay } from '../pages/MissionData'
+import { MissionOverview, MissionReplay } from '../pages/MissionData'
 import { screens } from '../pages/screens'
 import { useCompanionSession } from '../companion/session'
 import type { CompanionSession } from '../companion/session'
@@ -9,6 +9,7 @@ import { useHealth } from '../services/health'
 import type { Connection } from '../services/health'
 
 const Companion = lazy(() => import('../pages/Companion'))
+const DataScience = lazy(() => import('../pages/DataScience'))
 const CrewHealth = lazy(() => import('../pages/CrewHealth'))
 const ResearchPrototypes = lazy(() => import('../pages/ResearchPrototypes'))
 
@@ -74,7 +75,7 @@ function Screen({ screen, connection, companion }: { screen: typeof screens[numb
     '/crew-health': <Suspense fallback={<p role="status">Loading Crew Health…</p>}><CrewHealth /></Suspense>,
     '/mission-replay': <MissionReplay />,
     '/companion': <Suspense fallback={<p role="status">Loading ASTRA Companion…</p>}><Companion session={companion} /></Suspense>,
-    '/data-and-science': <DataScience />,
+    '/data-and-science': <Suspense fallback={<p role="status">Loading Data &amp; Science…</p>}><DataScience /></Suspense>,
     '/research-prototypes': <Suspense fallback={<p role="status">Loading research prototypes</p>}>
       <ResearchPrototypes />
     </Suspense>,

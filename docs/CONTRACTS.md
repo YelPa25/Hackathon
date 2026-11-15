@@ -91,6 +91,12 @@ Use a known person metric and context, or omit filters for all detail. Filters n
 | Blood pressure | `blood_pressure` is empty or the two latest valid components in systolic/diastolic order. A pair requires the same timestamp, source and activity context. |
 
 Responses inherit the inclusive UTC replay snapshot and describe synthetic observations. Individual private inputs are absent from Mission Overview findings. A consolidated cabin finding can show only the eligible aggregate opt-in count and cabin evidence. Thresholds, cadence and limits are documented in the [methodology](HEALTH_INTELLIGENCE_METHODOLOGY.md).
+## Data & Science comparison
+
+`GET /api/data/personalization?bpm=70` is a read-only educational endpoint. `bpm` is a whole number from 40 to 120 with a default of 70; this is an interaction range, not a medical limit. The response is `{dataset_id, method_version, hypothetical_bpm, comparisons}`. Comparisons are ordered by crew ID and include `crew_id, display_name, median_bpm, mad_bpm, effective_mad_bpm, distinct_days, absolute_difference_bpm, modified_z, strength`. The strength is `below_moderate`, `moderate`, `strong`. Strength and other unavailable comparison values are null when the reference is insufficient.
+
+The endpoint uses shareable resting heart rate from Days 1–45 within the normal replay cutoff. It returns no observation rows, timestamps or private self-reports. The hypothetical reading is never stored or used to assign a monitoring state. Invalid query values return 422 in the common error envelope; an unavailable dataset uses the existing readiness error.
+
 ## ASTRA Companion
 
 | Method and path | Request and response |

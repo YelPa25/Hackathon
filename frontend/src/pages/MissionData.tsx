@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { ResearchSummary } from '../research/ResearchSummary'
 import { Link } from 'react-router'
 import { FindingCard, MonitoringBadge } from './HealthFindings'
-import type { Dataset, Mission, Observation } from '../services/mission'
+import type { Mission, Observation } from '../services/mission'
 import { capitalize, formatUtc, label, metricLabel, Panel, Resource, unit } from './mission-display'
 
 export { MissionReplay } from './MissionReplay'
@@ -69,49 +69,6 @@ export function MissionOverview({ readiness }: { readiness: ReactNode }) {
       {!!mission.cabin_findings?.length && <div className="native-findings-list">{mission.cabin_findings.map((finding) =>
         <FindingCard key={finding.rule_id + finding.title} finding={finding} method={mission.analysis_method_version ?? undefined} />
       )}</div>}
-    </Panel>
-  </div>}</Resource>
-}
-
-export function DataScience() {
-  return <Resource<Dataset> url="/api/data" live>{(dataset) => <div className="mission-stack">
-    <Panel title="Synthetic mission dataset">
-      <p className="profile-summary"><strong>{dataset.dataset_id} · v{dataset.version}</strong></p>
-      <p>Research-informed synthetic observations for a fictional crew. NASA and CDC publications informed the dataset design. It contains no actual astronaut health records.</p>
-      <dl className="replay-facts">
-        <div><dt>Mission duration</dt><dd>{dataset.mission_days} days</dd></div>
-        <div><dt>Published history</dt><dd>Days 1–{dataset.historical_days}</dd></div>
-        <div><dt>Revealed observations</dt><dd>{dataset.replay.visible_count.toLocaleString()}</dd></div>
-        <div><dt>Historical records</dt><dd>{dataset.historical_count.toLocaleString()}</dd></div>
-        <div><dt>Explicitly missing readings</dt><dd>{dataset.historical_missing_count}</dd></div>
-      </dl>
-      {dataset.source_status !== 'VERIFIED' && <p data-tone="warn" role="status">
-        {dataset.source_status === 'INVALID' ? 'Source integrity check failed.' : 'Source bundle unavailable.'} The last verified import is available.
-      </p>}
-    </Panel>
-    <Panel title={'Metric dictionary · ' + dataset.metrics.length + ' metrics'}>
-      <dl className="reading-grid">{dataset.metrics.map((metric) =>
-        <div className="reading-tile" key={metric.metric}>
-          <dt>{metricLabel(metric.metric)} · {unit(metric.unit)}</dt>
-          <dd>{metric.description}</dd>
-          <dd>{metric.scope === 'person' ? 'Crew' : 'Cabin'} · {label(metric.measurement_cadence)}</dd>
-        </div>
-      )}</dl>
-    </Panel>
-    <Panel title="How health intelligence works">
-      <ul className="reference-list">
-        <li><strong>Personal reference.</strong> Days 1–{dataset.historical_days} establish a fixed reference for each person and measurement context. ASTRA uses daily medians and the median absolute deviation (MAD) for numerical readings. For self-reports it compares differences on the original rating scale.</li>
-        <li><strong>Changes and trends.</strong> A modified Z-score describes how far a reading is from the reference. ASTRA also checks whether the change continues across different measurement days or appears alongside related findings.</li>
-        <li><strong>Data limits.</strong> Unpublished observations are excluded. Missing readings stay missing. Old readings can remain visible in history but do not count as current. Mission Overview uses shareable evidence; shared cabin findings include only aggregate opt-in counts. This demo has no per-user authentication.</li>
-        <li><strong>Evidence boundary.</strong> Statistical methods and research references inform the design. ASTRA chose its detection thresholds for this synthetic demonstration. They are not NASA medical standards or clinically validated limits. An overlap between observations cannot establish a cause.</li>
-      </ul>
-      <p><a className="native-link" href="https://itl.nist.gov/div898/handbook/eda/section3/eda35h.htm">NIST reference for the modified Z-score</a></p>
-    </Panel>
-    <Panel title="Research references">
-      <ul className="reference-list">{dataset.references.map((reference) => <li key={reference.source_id}>
-        <a href={reference.url}>{reference.title}</a>
-        <p>{reference.organization} · {reference.use}</p>
-      </li>)}</ul>
     </Panel>
   </div>}</Resource>
 }

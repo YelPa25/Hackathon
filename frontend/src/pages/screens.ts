@@ -23,7 +23,7 @@ export const screens = [
     path: '/data-and-science',
     title: 'Data & Science',
     icon: BookOpen,
-    description: 'Dataset provenance, measurement definitions and research sources.',
+    description: 'The scientific foundation, engineering methodology and verified capabilities behind ASTRA.',
   },
   {
     path: '/research-prototypes',
