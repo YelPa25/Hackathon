@@ -103,6 +103,16 @@ Synthetic face and speech examples work after Core setup. The [Windows capture g
 
 ## Project map
 
+```text
+backend/
+  src/astra/                  Core API, SQLite, replay, statistics, and local chat
+  tests/                      Core, replay, analysis, and Companion tests
+frontend/src/                 React screens, charts, styles, and local assets
+face_speech/                  Separate research integrations and detector tests
+ASTRA_90day_dataset_v1/        Runtime partitions, metadata, and generator
+docs/                         Architecture, methods, and verification records
+```
+
 | Path | Contents |
 | --- | --- |
 | [backend/src/astra](backend/src/astra) | API, SQLite, replay and observation queries. |
